@@ -1,9 +1,9 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.24;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract SafeMath {
-  function safeMul(uint256 a, uint256 b) returns (uint256) {
+  function safeMul(uint256 a, uint256 b) public returns (uint256) {
     uint256 c = a * b;
     require(a == 0 || c / a == b);
     return c;
@@ -20,18 +20,20 @@ contract SafeMath {
 }
 
 contract Owned {
-  address public owner;
-  function Owned() {
-    owner = msg.sender;
-  }
-  function setOwner(address _owner) returns (bool success) {
-    owner = _owner;
-    return true;
-  }
-  modifier onlyOwner {
-    require(msg.sender == owner);
-    _;
-  }
+    address public owner;
+
+    constructor() public {
+        owner = msg.sender;
+    }
+    
+    function setOwner(address _owner) public returns (bool success) {
+        owner = _owner;
+        return true;
+    }
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 }
 
 contract ERC20 is SafeMath, Owned {
@@ -50,7 +52,7 @@ contract ERC20 is SafeMath, Owned {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function ERC20() public {
+    constructor() public {
         totalSupply = 1000000000000000000000000000;
         balanceOf[msg.sender] = totalSupply;
     }
@@ -66,7 +68,7 @@ contract ERC20 is SafeMath, Owned {
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         require(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
@@ -133,22 +135,23 @@ contract ERC20 is SafeMath, Owned {
         }
     }
 
-    function unlockToken() onlyOwner {
-      locked = false;
+    function unlockToken() public onlyOwner {
+        locked = false;
     }
 
     bool public balancesUploaded = true;
-    function uploadBalances(address[] recipients, uint256[] balances) onlyOwner {
-      require(!balancesUploaded);
-      uint256 sum = 0;
-      for (uint256 i = 0; i < recipients.length; i++) {
-        balanceOf[recipients[i]] = safeAdd(balanceOf[recipients[i]], balances[i]);
-        sum = safeAdd(sum, balances[i]);
-      }
-      balanceOf[owner] = safeSub(balanceOf[owner], sum);
+    function uploadBalances(address[] recipients, uint256[] balances) public onlyOwner {
+        require(!balancesUploaded);
+        uint256 sum = 0;
+        for (uint256 i = 0; i < recipients.length; i++) {
+            balanceOf[recipients[i]] = safeAdd(balanceOf[recipients[i]], balances[i]);
+            sum = safeAdd(sum, balances[i]);
+        }
+        balanceOf[owner] = safeSub(balanceOf[owner], sum);
     }
-    function lockBalances() onlyOwner {
-      balancesUploaded = true;
+
+    function lockBalances() public onlyOwner {
+        balancesUploaded = true;
     }
 }
 

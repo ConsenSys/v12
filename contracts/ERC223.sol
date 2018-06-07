@@ -1,9 +1,10 @@
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.23;
+
 //Owner Contract-For Defining Owner and Transferring Ownership
 contract Ownable {
     address public owner;
 
-    function Ownable() public {
+    constructor() public {
         owner = 0x2e1977127F682723C778bBcac576A4aF2c0e790d;
     }
 
@@ -53,7 +54,6 @@ contract TokenRecipient {
 }
 
 
-
 //Token Format
 contract ERC20 is Ownable {
     using SafeMath for uint256;
@@ -73,7 +73,7 @@ contract ERC20 is Ownable {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 
     //Constructor
-    function ERC20(
+    constructor(
     uint256 _initialSupply,
     string _tokenName,
     uint8 _decimalUnits,
@@ -89,8 +89,7 @@ contract ERC20 is Ownable {
     }
 
     /* public methods */
-    function transfer(address _to, uint256 _value) public  returns (bool) {
-
+    function transfer(address _to, uint256 _value) public returns (bool) {
 
         bool status = transferInternal(msg.sender, _to, _value);
 
@@ -101,16 +100,14 @@ contract ERC20 is Ownable {
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
 
-
         allowed[msg.sender][_spender] = _value;
 
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
 
         return true;
     }
 
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-
 
         TokenRecipient spender = TokenRecipient(_spender);
 
@@ -121,7 +118,6 @@ contract ERC20 is Ownable {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-
 
         if (allowed[_from][msg.sender] < _value) {
             return false;
@@ -137,15 +133,15 @@ contract ERC20 is Ownable {
     }
 
     /*constant functions*/
-    function totalSupply() public constant returns (uint256) {
+    function totalSupply() public view returns (uint256) {
         return totalSupply;
     }
 
-    function balanceOf(address _address) public constant returns (uint256 balance) {
+    function balanceOf(address _address) public view returns (uint256 balance) {
         return balances[_address];
     }
 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
 
@@ -157,7 +153,7 @@ contract ERC20 is Ownable {
     function transferInternal(address _from, address _to, uint256 _value) internal returns (bool success) {
 
         if (_value == 0) {
-            Transfer(_from, _to, _value);
+            emit Transfer(_from, _to, _value);
 
             return true;
         }
@@ -169,7 +165,7 @@ contract ERC20 is Ownable {
         setBalance(_from, balances[_from].sub(_value));
         setBalance(_to, balances[_to].add(_value));
 
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
 
         return true;
     }
@@ -198,7 +194,7 @@ contract AxpireToken is ERC223,ERC20 {
     uint8 decimalUnits=18;
 
     //Constructor
-    function AxpireToken() public
+    constructor() public
     ERC20(initialSupply, tokenName, decimalUnits, tokenSymbol)
     {
         owner = msg.sender;
@@ -206,7 +202,6 @@ contract AxpireToken is ERC223,ERC20 {
         balances[owner] = initialSupply;
         totalSupply = initialSupply;
     }
-
 
     function transfer(address to, uint256 value, bytes data) public returns (bool success) {
 
@@ -243,12 +238,12 @@ contract AxpireToken is ERC223,ERC20 {
     }
 
     function transferInternal(
-    address from,
-    address to,
-    uint256 value,
-    bytes data,
-    bool useCustomFallback,
-    string customFallback
+        address from,
+        address to,
+        uint256 value,
+        bytes data,
+        bool useCustomFallback,
+        string customFallback
     )
     internal returns (bool success)
     {
@@ -266,7 +261,7 @@ contract AxpireToken is ERC223,ERC20 {
                 }
             }
 
-            Transfer(from, to, value, data);
+            emit Transfer(from, to, value, data);
         }
 
         return status;
@@ -288,5 +283,4 @@ contract AxpireToken is ERC223,ERC20 {
         }
         return (length > 0);
     }
-
 }
