@@ -1,7 +1,9 @@
 'use strict';
 
 const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
+
+//Note: 7545 Ganache
+const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
 
 const { bindKey } = require('lodash');
 const { promisify } = require('bluebird');
