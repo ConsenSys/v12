@@ -186,7 +186,7 @@ contract Owned {
     event OwnershipRemoved();
 
     /// @dev The constructor sets the `msg.sender` as the`owner` of the contract
-    constructor Owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
