@@ -25,6 +25,7 @@
     "ethereumjs-wallet": "^0.6.0",
     "lodash": "^4.17.4",
     "mocha": "^5.2.0",
-    "promise-compose": "^1.1.2"
+    "promise-compose": "^1.1.2",
+    "solidity-coverage": "^0.5.4"
   }
 }
