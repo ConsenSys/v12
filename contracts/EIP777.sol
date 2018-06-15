@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18; // solhint-disable-line compiler-fixed
+pragma solidity ^0.4.24; // solhint-disable-line compiler-fixed
 
 contract EIP820ImplementerInterface {
     /// @notice Contracts that implement an interferce in behalf of another contract must return true
@@ -42,7 +42,7 @@ contract EIP820Registry {
     ///  the old one.  Set to 0x0 if you want to remove the manager.
     function setManager(address addr, address newManager) public canManage(addr) {
         managers[addr] = newManager == addr ? 0 : newManager;
-        ManagerChanged(addr, newManager);
+        emit ManagerChanged(addr, newManager);
     }
 
     /// @notice Query if an address implements an interface and thru which contract
@@ -51,7 +51,7 @@ contract EIP820Registry {
     ///  Example `web3.utils.sha3('Ierc777`')`
     /// @return The address of the contract that implements a speficic interface
     ///  or 0x0 if `addr` does not implement this interface
-    function getInterfaceImplementer(address addr, bytes32 iHash) public constant returns (address) {
+    function getInterfaceImplementer(address addr, bytes32 iHash) public view returns (address) {
         return interfaces[addr][iHash];
     }
 
@@ -65,7 +65,7 @@ contract EIP820Registry {
             require(EIP820ImplementerInterface(implementer).canImplementInterfaceForAddress(addr, iHash));
         }
         interfaces[addr][iHash] = implementer;
-        InterfaceImplementerSet(addr, iHash, implementer);
+        emit InterfaceImplementerSet(addr, iHash, implementer);
     }
 
     event InterfaceImplementerSet(address indexed addr, bytes32 indexed interfaceHash, address indexed implementer);
@@ -80,7 +80,7 @@ contract EIP820Implementer {
         eip820Registry.setInterfaceImplementer(this, ifaceHash, impl);
     }
 
-    function interfaceAddr(address addr, string ifaceLabel) internal constant returns(address) {
+    function interfaceAddr(address addr, string ifaceLabel) internal view returns(address) {
         bytes32 ifaceHash = keccak256(ifaceLabel);
         return eip820Registry.getInterfaceImplementer(addr, ifaceHash);
     }
@@ -92,40 +92,38 @@ contract EIP820Implementer {
 }
 
 interface Ierc20 {
-    function name() public constant returns (string);
-    function symbol() public constant returns (string);
-    function decimals() public constant returns (uint8);
-    function totalSupply() public constant returns (uint256);
-    function balanceOf(address owner) public constant returns (uint256);
+    function name() public view returns (string);
+    function symbol() public view returns (string);
+    function decimals() public view returns (uint8);
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address owner) public view returns (uint256);
     function transfer(address to, uint256 value) public returns (bool);
     function transferFrom(address from, address to, uint256 value) public returns (bool);
     function approve(address spender, uint256 value) public returns (bool);
-    function allowance(address owner, address spender) public constant returns (uint256);
+    function allowance(address owner, address spender) public view returns (uint256);
 
     // solhint-disable-next-line no-simple-event-func-name
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-pragma solidity ^0.4.19; // solhint-disable-line compiler-fixed
-
-
 interface Ierc777 {
-    function name() public constant returns (string);
-    function symbol() public constant returns (string);
-    function totalSupply() public constant returns (uint256);
-    function granularity() public constant returns (uint256);
-    function balanceOf(address owner) public constant returns (uint256);
+    function name() public view returns (string);
+    function symbol() public view returns (string);
+    function totalSupply() public view returns (uint256);
+    function granularity() public view returns (uint256);
+    function balanceOf(address owner) public view returns (uint256);
 
     function send(address to, uint256 amount) public;
     function send(address to, uint256 amount, bytes userData) public;
 
     function authorizeOperator(address operator) public;
     function revokeOperator(address operator) public;
-    function isOperatorFor(address operator, address tokenHolder) public constant returns (bool);
+    function isOperatorFor(address operator, address tokenHolder) public view returns (bool);
     function operatorSend(address from, address to, uint256 amount, bytes userData, bytes operatorData) public;
 
     event Sent( // solhint-disable-line no-simple-event-func-name
@@ -145,9 +143,6 @@ interface Ierc777 {
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
-pragma solidity ^0.4.19; // solhint-disable-line compiler-fixed
-
 
 interface ITokenRecipient {
     function tokensReceived(
@@ -191,7 +186,7 @@ contract Owned {
     event OwnershipRemoved();
 
     /// @dev The constructor sets the `msg.sender` as the`owner` of the contract
-    function Owned() public {
+    constructor Owned() public {
         owner = msg.sender;
     }
 
@@ -210,7 +205,7 @@ contract Owned {
     /// @param _newOwnerCandidate The address being proposed as the new owner
     function proposeOwnership(address _newOwnerCandidate) public onlyOwner {
         newOwnerCandidate = _newOwnerCandidate;
-        OwnershipRequested(msg.sender, newOwnerCandidate);
+        emit OwnershipRequested(msg.sender, newOwnerCandidate);
     }
 
     /// @notice Can only be called by the `newOwnerCandidate`, accepts the
@@ -222,7 +217,7 @@ contract Owned {
         owner = newOwnerCandidate;
         newOwnerCandidate = 0x0;
 
-        OwnershipTransferred(oldOwner, owner);
+        emit OwnershipTransferred(oldOwner, owner);
     }
 
     /// @dev In this 2nd option for ownership transfer `changeOwnership()` can
@@ -236,7 +231,7 @@ contract Owned {
         owner = _newOwner;
         newOwnerCandidate = 0x0;
 
-        OwnershipTransferred(oldOwner, owner);
+        emit OwnershipTransferred(oldOwner, owner);
     }
 
     /// @dev In this 3rd option for ownership transfer `removeOwnership()` can
@@ -248,7 +243,7 @@ contract Owned {
         require(_dac == 0xdac);
         owner = 0x0;
         newOwnerCandidate = 0x0;
-        OwnershipRemoved();     
+        emit OwnershipRemoved();     
     }
 } 
 /**
@@ -319,21 +314,21 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     /* -- ERC777 Interface Implementation -- */
     //
     /// @return the name of the token
-    function name() public constant returns (string) { return mName; }
+    function name() public view returns (string) { return mName; }
 
     /// @return the symbol of the token
-    function symbol() public constant returns(string) { return mSymbol; }
+    function symbol() public view returns(string) { return mSymbol; }
 
     /// @return the granularity of the token
-    function granularity() public constant returns(uint256) { return mGranularity; }
+    function granularity() public view returns(uint256) { return mGranularity; }
 
     /// @return the total supply of the token
-    function totalSupply() public constant returns(uint256) { return mTotalSupply; }
+    function totalSupply() public view returns(uint256) { return mTotalSupply; }
 
     /// @notice Return the account balance of some account
     /// @param _tokenHolder Address for which the balance is returned
     /// @return the balance of `_tokenAddress`.
-    function balanceOf(address _tokenHolder) public constant returns (uint256) { return mBalances[_tokenHolder]; }
+    function balanceOf(address _tokenHolder) public view returns (uint256) { return mBalances[_tokenHolder]; }
 
     /// @notice Send `_value` amount of tokens to address `_to`
     /// @param _to The address of the recipient
@@ -369,7 +364,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     /// @param _operator address to check if it has the right to manage the tokens
     /// @param _tokenHolder address which holds the tokens to be managed
     /// @return `true` if `_operator` is authorized for `_tokenHolder`
-    function isOperatorFor(address _operator, address _tokenHolder) public constant returns (bool) {
+    function isOperatorFor(address _operator, address _tokenHolder) public view returns (bool) {
         return _operator == _tokenHolder || mAuthorized[_operator][_tokenHolder];
     }
 
@@ -443,7 +438,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
 
     /// @notice For Backwards compatibility
     /// @return The decimls of the token. Forced to 18 in ERC777.
-    function decimals() public erc20 constant returns (uint8) { return uint8(18); }
+    function decimals() public erc20 view returns (uint8) { return uint8(18); }
 
     /// @notice ERC20 backwards compatible transfer.
     /// @param _to The address of the recipient
@@ -485,7 +480,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     /// @param _spender The address of the account able to transfer the tokens
     /// @return Amount of remaining tokens of _owner that _spender is allowed
     ///  to spend
-    function allowance(address _owner, address _spender) public erc20 constant returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) public erc20 view returns (uint256 remaining) {
         return mAllowed[_owner][_spender];
     }
 
@@ -500,7 +495,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     /// @notice Check whether an address is a regular address or not.
     /// @param _addr Address of the contract that has to be checked
     /// @return `true` if `_addr` is a regular address (not a contract)
-    function isRegularAddress(address _addr) internal constant returns(bool) {
+    function isRegularAddress(address _addr) internal view returns(bool) {
         if (_addr == 0) { return false; }
         uint size;
         assembly { size := extcodesize(_addr) } // solhint-disable-line no-inline-assembly

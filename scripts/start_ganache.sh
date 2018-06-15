@@ -1,0 +1,1 @@
+./ganache-cli -m "whip venture public clip similar debris minimum mandate despair govern rotate swim"
