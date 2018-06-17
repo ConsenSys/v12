@@ -55,15 +55,15 @@ interface DepositReceiver {
 
 library BytesToAddress {
     function toAddress(bytes _address) internal pure returns (address) {
-      if (_address.length < 20) return address(0);
-      uint160 m = 0;
-      uint160 b = 0;
-      for (uint8 i = 0; i < 20; i++) {
-        m *= 256;
-        b = uint160(_address[i]);
-        m += (b);
-      }
-      return address(m);
+        if (_address.length < 20) return address(0);
+            uint160 m = 0;
+            uint160 b = 0;
+            for (uint8 i = 0; i < 20; i++) {
+                m *= 256;
+                b = uint160(_address[i]);
+                m += (b);
+            }
+        return address(m);
     }
 }
 
@@ -84,9 +84,9 @@ contract DepositProxy {
     address public exchange;
     event Deposit(address token, uint256 amount);
 
-    function DepositProxy(address _exchange, address _beneficiary) public {
-        exchange = exchange;
-        beneficiary = beneficiary;
+    constructor(address _exchange, address _beneficiary) public {
+        exchange = _exchange;
+        beneficiary = _beneficiary;
         registerEIP777Interface();
     }
 
@@ -126,39 +126,6 @@ contract DepositProxy {
         emit Deposit(0x0, msg.value);
     }
 }
-
-// library SafeMath {
-//   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-//     uint256 c = a * b;
-//     require(a == 0 || c / a == b);
-//     return c;
-//   }
-//   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-//     require(b <= a);
-//     return a - b;
-//   }
-//   function add(uint256 a, uint256 b) internal pure returns (uint256) {
-//     uint256 c = a + b;
-//     require(c >= a && c >= b);
-//     return c;
-//   }
-// }
-
-// contract Owned {
-//   address public owner;
-//   function Owned() public {
-//     owner = msg.sender;
-//   }
-//   event SetOwner(address indexed previousOwner, address indexed newOwner);
-//   modifier onlyOwner {
-//     require(msg.sender == owner);
-//     _;
-//   }
-//   function setOwner(address newOwner) public onlyOwner {
-//     SetOwner(owner, newOwner);
-//     owner = newOwner;
-//   }
-//}
 
 contract Exchange is Owned {
     using BytesToAddress for bytes;
