@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -8,10 +8,12 @@ contract SafeMath {
     require(a == 0 || c / a == b);
     return c;
   }
+
   function safeSub(uint256 a, uint256 b) returns (uint256) {
     require(b <= a);
     return a - b;
   }
+
   function safeAdd(uint256 a, uint256 b) returns (uint256) {
     uint c = a + b;
     require(c >= a && c >= b);

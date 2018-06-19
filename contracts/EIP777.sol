@@ -24,7 +24,7 @@ contract EIP820Registry {
     /// @notice Query the hash of an interface given a name
     /// @param interfaceName Name of the interfce
     function interfaceHash(string interfaceName) public pure returns(bytes32) {
-        return keccak256(interfaceName);
+        return keccak256(abi.encodePacked(interfaceName));
     }
 
     /// @notice GetManager
