@@ -359,7 +359,7 @@ contract Exchange is Owned {
         return true;
     }
 
-    function trade(uint256[8] tradeValues, address[4] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
+    function trade(uint256[8] tradeValues, address[2] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
         /* amount is in amountBuy terms */
         /* tradeValues
           [0] amountBuy
@@ -373,8 +373,8 @@ contract Exchange is Owned {
         tradeAddressses
           [0] tokenBuy
           [1] tokenSell
-          [2] maker
-          [3] taker
+          [2] maker * removed
+          [3] taker * removed
         */
         require(block.number < tradeValues[2]);
         require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
