@@ -172,6 +172,7 @@ contract Exchange is Owned {
     mapping (bytes32 => bool) public transferred;
     mapping (address => uint256) public protectedFunds;
     mapping (address => bool) public thirdPartyDepositorDisabled;
+    
     event Trade(address tokenBuy, address tokenSell, address maker, address taker, uint256 amount, bytes32 hash);
     event Deposit(address token, address user, uint256 amount, uint256 balance);
     event Cancel(address user, bytes32 orderHash, uint256 nonce);

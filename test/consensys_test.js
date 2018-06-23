@@ -212,7 +212,6 @@ describe('IDEX contract v2 updates', () => {
       }),
   );
   
-  
   describe('trade function', () => {
     before(() =>
       sendEther({
@@ -298,10 +297,12 @@ describe('IDEX contract v2 updates', () => {
         //),
     );
 
-    it('change to limit order', () => {
+
+    it('should deposit tokens', () => {
+      
       const contractAddress = exchangeContract;
       const tokenBuy = ETH_ADDRESS;
-      const amoutBuy = '0';
+      const amountBuy = '0';
       const tokenSell = erc20Contract;
       const amountSell = '100';
       const expires = '10000';
@@ -309,6 +310,94 @@ describe('IDEX contract v2 updates', () => {
 
       
       const bob = bobWallet.getAddressString();
+
+      const _tokenAddress;
+      const _targetAddress = bobWallet.getAddressString();
+      const _amount = 100;
+
+      return sendExchangeTx({
+        from,
+        data: eth.encodeFunctionCall(
+          {
+            name: 'depositTokens',
+            inputs: [
+              {
+                type: 'address',
+                name: 'tokens',
+              },
+              {
+                type: 'address',
+                name: 'target',
+              },
+              {
+                type: 'uint256',
+                name: 'amount',
+              }
+            ],
+          },
+          [
+            _tokenAddress,
+            _targetAddress,
+            _amount
+          ]
+        ),
+      });
+    });
+
+    it('change to limit order', () => {
+      
+      const contractAddress = exchangeContract;
+      const tokenBuy = ETH_ADDRESS;
+      const amountBuy = '0';
+      const tokenSell = erc20Contract;
+      const amountSell = '100';
+      const expires = '10000';
+      const nonce = '0';
+
+      
+      const bob = bobWallet.getAddressString();
+
+      const _tokenAddress;
+      const _targetAddress = bobWallet.getAddressString();
+      const _amount = 100;
+
+      return sendExchangeTx({
+        from,
+        data: eth.encodeFunctionCall(
+          {
+            name: 'depositTokens',
+            inputs: [
+              {
+                type: 'address',
+                name: 'tokens',
+              },
+              {
+                type: 'address',
+                name: 'target',
+              },
+              {
+                type: 'uint256',
+                name: 'amount',
+              }
+            ],
+          },
+          [
+            _tokenAddress,
+            _targetAddress,
+            _amount
+          ]
+        ),
+      });
+
+
+
+
+
+
+
+
+
+
       //const carol = carolWallet.getAddressString();
       
       const orderHash = soliditySha3(
@@ -365,7 +454,7 @@ describe('IDEX contract v2 updates', () => {
         {
           t: 'uint256',
           v: tradeNonce,
-        },
+        }
       );
 
       const {v, r, s} = mapValues(
@@ -385,7 +474,7 @@ describe('IDEX contract v2 updates', () => {
       );
 
       const feeMake = new BN('0.00001').times(unitMap.ether).toPrecision();
-      const feeTake = feeMake;
+      const feeTake = new BN('0.00001').times(unitMap.ether).toPrecision();
       return sendExchangeTx({
         from,
         data: eth.encodeFunctionCall(
@@ -421,7 +510,7 @@ describe('IDEX contract v2 updates', () => {
               feeMake,
               feeTake,
             ],
-            [tokenBuy, tokenSell, user, bob],
+            [tokenBuy, tokenSell, alice, bob],
             [v, tradeV],
             [r, s, tradeR, tradeS],
           ],
