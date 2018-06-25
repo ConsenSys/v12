@@ -132,6 +132,7 @@ contract Exchange is Owned {
     using SafeMath for uint256;
     uint256 constant public INACTIVITY_CAP = 1e6;
     mapping (address => uint256) public invalidOrder;
+    
     event ProxyCreated(address beneficiary, address proxyAddress);
 
     function createDepositProxy(address target) public returns (address) {
@@ -166,7 +167,9 @@ contract Exchange is Owned {
     mapping (bytes32 => bool) public transferred;
     mapping (address => uint256) public protectedFunds;
     mapping (address => bool) public thirdPartyDepositorDisabled;
-    event Trade(address tokenBuy, address tokenSell, address maker, address taker, uint256 amount, bytes32 hash);
+
+    //event Trade(address tokenBuy, address tokenSell, address maker, address taker, uint256 amount, bytes32 hash);
+    event Trade(address tokenBuy, address tokenSell, address user, uint256 amount, bytes32 hash);
     event Deposit(address token, address user, uint256 amount, uint256 balance);
     event Cancel(address user, bytes32 orderHash, uint256 nonce);
     event Withdraw(address token, address user, uint256 amount, uint256 balance);
@@ -200,7 +203,7 @@ contract Exchange is Owned {
         return true;
     }
 
-    function Exchange(address feeAccount_) public {
+    function constructor(address feeAccount_) public {
         feeAccount = feeAccount_;
         registerEIP777Interface();
     }
@@ -251,7 +254,7 @@ contract Exchange is Owned {
         if (target == 0x0) target = msg.sender;
         require(acceptDeposit(0x0, target, msg.value));
         return true;
-      }
+    }
 
     function tokenFallback(address target, uint256 amount, bytes data) public {
         address beneficiary = data.toAddress();
@@ -270,7 +273,7 @@ contract Exchange is Owned {
         address beneficiary = userData.toAddress();
         if (beneficiary != 0x0) from = beneficiary;
         require(acceptDeposit(msg.sender, from, amount));
-      }
+    }
 
     function registerEIP777Interface() internal {
         InterfaceImplementationRegistry(0x9aA513f1294c8f1B254bA1188991B4cc2EFE1D3B).setInterfaceImplementer(this, keccak256("ITokenRecipient"), this);
@@ -283,7 +286,7 @@ contract Exchange is Owned {
         protectedFunds[token] = protectedFunds[token].sub(amount);
         if (token == address(0)) require(target.send(amount));
         else require(Token(token).transfer(target, amount));
-        Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+        emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
         return true;
     }
 
@@ -294,7 +297,7 @@ contract Exchange is Owned {
         amount = amount.sub(amount % EIP777(token).granularity());
         protectedFunds[token] = protectedFunds[token].sub(amount);
         EIP777(token).send(target, amount);
-        Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+        emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
         return true;
     }
 
@@ -355,11 +358,58 @@ contract Exchange is Owned {
         tokens[token][target] = tokens[token][target].add(amount);
         lastActiveTransaction[user] = block.number;
         lastActiveTransaction[target] = block.number;
+
         emit Transfer(token, target);
         return true;
     }
 
-    function trade(uint256[8] tradeValues, address[2] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
+    // function trade(uint256[8] tradeValues, address[2] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
+    //     /* amount is in amountBuy terms */
+    //     /* tradeValues
+    //       [0] amountBuy
+    //       [1] amountSell
+    //       [2] expires
+    //       [3] nonce
+    //       [4] amount
+    //       [5] tradeNonce
+    //       [6] feeMake
+    //       [7] feeTake
+    //     tradeAddressses
+    //       [0] tokenBuy
+    //       [1] tokenSell
+    //       [2] maker * removed
+    //       [3] taker * removed
+    //     */
+    //     require(block.number < tradeValues[2]);
+    //     require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
+    //     bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
+    //     require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
+    //     bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
+    //     require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
+    //     require(!traded[tradeHash]);
+    //     traded[tradeHash] = true;
+    //     if (tradeValues[6] > 10 finney) tradeValues[6] = 10 finney;
+    //     if (tradeValues[7] > 1 ether) tradeValues[7] = 1 ether;
+    //     require(orderFills[orderHash].add(tradeValues[4]) <= tradeValues[0]);
+    //     require(tokens[tradeAddresses[0]][tradeAddresses[3]] >= tradeValues[4]);
+    //     require(tokens[tradeAddresses[1]][tradeAddresses[2]] >= (tradeValues[1].mul(tradeValues[4]) / tradeValues[0]));
+    //     tokens[tradeAddresses[0]][tradeAddresses[3]] = tokens[tradeAddresses[0]][tradeAddresses[3]].sub(tradeValues[4]);
+    //     uint256 makerFee = tradeValues[4].mul(tradeValues[6]) / 1 ether;
+    //     tokens[tradeAddresses[0]][tradeAddresses[2]] = tokens[tradeAddresses[0]][tradeAddresses[2]].add(tradeValues[4] - makerFee);
+    //     tokens[tradeAddresses[0]][feeAccount] = tokens[tradeAddresses[0]][feeAccount].add(makerFee);
+    //     tokens[tradeAddresses[1]][tradeAddresses[2]] = tokens[tradeAddresses[1]][tradeAddresses[2]].sub(tradeValues[1].mul(tradeValues[4]) / tradeValues[0]);
+    //     uint256 amountSellAdjusted = tradeValues[1].mul(tradeValues[4]) / tradeValues[0];
+    //     uint256 takerFee = tradeValues[7].mul(amountSellAdjusted) / 1 ether;
+    //     tokens[tradeAddresses[1]][tradeAddresses[3]] = tokens[tradeAddresses[1]][tradeAddresses[3]].add(amountSellAdjusted.sub(takerFee));
+    //     tokens[tradeAddresses[1]][feeAccount] = tokens[tradeAddresses[1]][feeAccount].add(takerFee);
+    //     orderFills[orderHash] = orderFills[orderHash].add(tradeValues[4]);
+    //     lastActiveTransaction[tradeAddresses[2]] = block.number;
+    //     lastActiveTransaction[tradeAddresses[3]] = block.number;
+    //     Trade(tradeAddresses[0], tradeAddresses[1], tradeAddresses[2], tradeAddresses[3], tradeValues[4], orderHash);
+    //     return true;
+    // }
+
+    function trade(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
         /* amount is in amountBuy terms */
         /* tradeValues
           [0] amountBuy
@@ -368,40 +418,68 @@ contract Exchange is Owned {
           [3] nonce
           [4] amount
           [5] tradeNonce
-          [6] feeMake
-          [7] feeTake
+          [6] fee
         tradeAddressses
           [0] tokenBuy
           [1] tokenSell
-          [2] maker * removed
-          [3] taker * removed
+          [2] user (address)
         */
+
+        //Has not expired
         require(block.number < tradeValues[2]);
+
+        //Check the oder has not be submitted as invalid
         require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
+        
+        //Check the valid hash
         bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
         require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
-        bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
-        require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
-        require(!traded[tradeHash]);
-        traded[tradeHash] = true;
+        
+        //Removed other addresses
+        //bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
+        //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
+        
+        //require(!traded[tradeHash]);
+        
+        //traded[tradeHash] = true;
+
         if (tradeValues[6] > 10 finney) tradeValues[6] = 10 finney;
-        if (tradeValues[7] > 1 ether) tradeValues[7] = 1 ether;
+        
+        //
+        //if (tradeValues[7] > 1 ether) tradeValues[7] = 1 ether;
+        
+        //
         require(orderFills[orderHash].add(tradeValues[4]) <= tradeValues[0]);
-        require(tokens[tradeAddresses[0]][tradeAddresses[3]] >= tradeValues[4]);
+        
+        //require(tokens[tradeAddresses[0]][tradeAddresses[3]] >= tradeValues[4]);
         require(tokens[tradeAddresses[1]][tradeAddresses[2]] >= (tradeValues[1].mul(tradeValues[4]) / tradeValues[0]));
-        tokens[tradeAddresses[0]][tradeAddresses[3]] = tokens[tradeAddresses[0]][tradeAddresses[3]].sub(tradeValues[4]);
-        uint256 makerFee = tradeValues[4].mul(tradeValues[6]) / 1 ether;
-        tokens[tradeAddresses[0]][tradeAddresses[2]] = tokens[tradeAddresses[0]][tradeAddresses[2]].add(tradeValues[4] - makerFee);
-        tokens[tradeAddresses[0]][feeAccount] = tokens[tradeAddresses[0]][feeAccount].add(makerFee);
+        
+        //tokens[tradeAddresses[0]][tradeAddresses[3]] = tokens[tradeAddresses[0]][tradeAddresses[3]].sub(tradeValues[4]);
+        
+        
+        
+        
+        uint256 fee = tradeValues[4].mul(tradeValues[6]) / 1 ether;
+        
+        tokens[tradeAddresses[0]][tradeAddresses[2]] = tokens[tradeAddresses[0]][tradeAddresses[2]].add(tradeValues[4] - fee);
+        tokens[tradeAddresses[0]][feeAccount] = tokens[tradeAddresses[0]][feeAccount].add(fee);
         tokens[tradeAddresses[1]][tradeAddresses[2]] = tokens[tradeAddresses[1]][tradeAddresses[2]].sub(tradeValues[1].mul(tradeValues[4]) / tradeValues[0]);
-        uint256 amountSellAdjusted = tradeValues[1].mul(tradeValues[4]) / tradeValues[0];
-        uint256 takerFee = tradeValues[7].mul(amountSellAdjusted) / 1 ether;
-        tokens[tradeAddresses[1]][tradeAddresses[3]] = tokens[tradeAddresses[1]][tradeAddresses[3]].add(amountSellAdjusted.sub(takerFee));
-        tokens[tradeAddresses[1]][feeAccount] = tokens[tradeAddresses[1]][feeAccount].add(takerFee);
+        
+        
+        
+        //uint256 amountSellAdjusted = tradeValues[1].mul(tradeValues[4]) / tradeValues[0];
+        
+        
+        //uint256 takerFee = tradeValues[7].mul(amountSellAdjusted) / 1 ether;
+        
+        //tokens[tradeAddresses[1]][tradeAddresses[3]] = tokens[tradeAddresses[1]][tradeAddresses[3]].add(amountSellAdjusted.sub(fee));
+        //tokens[tradeAddresses[1]][feeAccount] = tokens[tradeAddresses[1]][feeAccount].add(fee);
+        
         orderFills[orderHash] = orderFills[orderHash].add(tradeValues[4]);
         lastActiveTransaction[tradeAddresses[2]] = block.number;
-        lastActiveTransaction[tradeAddresses[3]] = block.number;
-        Trade(tradeAddresses[0], tradeAddresses[1], tradeAddresses[2], tradeAddresses[3], tradeValues[4], orderHash);
+        //lastActiveTransaction[tradeAddresses[3]] = block.number;
+        
+        emit Trade(tradeAddresses[0], tradeAddresses[1], tradeAddresses[2], tradeValues[4], orderHash);
         return true;
     }
 
@@ -410,6 +488,7 @@ contract Exchange is Owned {
         bytes32 hash = keccak256("\x19IDEX Signed Cancel:\n32", orderHash);
         require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == user);
         orderFills[orderHash] = amountBuy;
+        
         emit Cancel(user, orderHash, nonce);
         return true;
     }
