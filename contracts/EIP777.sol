@@ -459,7 +459,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     //
     /// @notice Internal function that ensures `_value` is multiple of the granularity
     /// @param _value The quantity that want's to be checked
-    function requireMultiple(uint256 _value) internal {
+    function requireMultiple(uint256 _value) internal view {
         require(_value.div(mGranularity).mul(mGranularity) == _value);
     }
 
