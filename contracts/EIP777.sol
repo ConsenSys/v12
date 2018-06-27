@@ -266,7 +266,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     /* -- Constructor -- */
     //
     /// @notice Constructor to create a ReferenceToken
-    function ReferenceToken()
+    constructor()
         public
     {
         mName = "EIP777 Sample";
@@ -441,7 +441,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     /// @return `true`, if the approve can't be done, it should fail.
     function approve(address _spender, uint256 _value) public erc20 returns (bool success) {
         mAllowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
