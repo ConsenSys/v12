@@ -1,23 +1,8 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
+
+import "./SafeMath.sol";
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
-
-contract SafeMath {
-  function safeMul(uint256 a, uint256 b) public returns (uint256) {
-    uint256 c = a * b;
-    require(a == 0 || c / a == b);
-    return c;
-  }
-  function safeSub(uint256 a, uint256 b) returns (uint256) {
-    require(b <= a);
-    return a - b;
-  }
-  function safeAdd(uint256 a, uint256 b) returns (uint256) {
-    uint c = a + b;
-    require(c >= a && c >= b);
-    return c;
-  }
-}
 
 contract Owned {
     address public owner;
@@ -36,7 +21,9 @@ contract Owned {
     }
 }
 
-contract ERC20 is SafeMath, Owned {
+contract ERC20 is Owned {
+    using SafeMath for uint;
+
     bool public locked = false;
     string public name = "Test ERC-20 Token";
     string public symbol = "ERC20";
@@ -144,14 +131,13 @@ contract ERC20 is SafeMath, Owned {
         require(!balancesUploaded);
         uint256 sum = 0;
         for (uint256 i = 0; i < recipients.length; i++) {
-            balanceOf[recipients[i]] = safeAdd(balanceOf[recipients[i]], balances[i]);
-            sum = safeAdd(sum, balances[i]);
+            balanceOf[recipients[i]] = balanceOf[recipients[i]].add(balances[i]);
+            sum = sum.add(balances[i]);
         }
-        balanceOf[owner] = safeSub(balanceOf[owner], sum);
+        balanceOf[owner] = balanceOf[owner].sub(sum);
     }
 
     function lockBalances() public onlyOwner {
         balancesUploaded = true;
     }
 }
-

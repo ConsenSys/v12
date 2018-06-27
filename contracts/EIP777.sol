@@ -24,7 +24,7 @@ contract EIP820Registry {
     /// @notice Query the hash of an interface given a name
     /// @param interfaceName Name of the interfce
     function interfaceHash(string interfaceName) public pure returns(bytes32) {
-        return keccak256(interfaceName);
+        return keccak256(abi.encodePacked(interfaceName));
     }
 
     /// @notice GetManager
@@ -266,7 +266,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     /* -- Constructor -- */
     //
     /// @notice Constructor to create a ReferenceToken
-    function ReferenceToken()
+    constructor()
         public
     {
         mName = "EIP777 Sample";
@@ -320,7 +320,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     function authorizeOperator(address _operator) public {
         require(_operator != msg.sender);
         mAuthorized[_operator][msg.sender] = true;
-        AuthorizedOperator(_operator, msg.sender);
+        emit AuthorizedOperator(_operator, msg.sender);
     }
 
     /// @notice Revoke a third party `_operator`'s rights to manage (send) `msg.sender`'s tokens.
@@ -328,7 +328,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     function revokeOperator(address _operator) public {
         require(_operator != msg.sender);
         mAuthorized[_operator][msg.sender] = false;
-        RevokedOperator(_operator, msg.sender);
+        emit RevokedOperator(_operator, msg.sender);
     }
 
     /// @notice Check whether the `_operator` address is allowed to manage the tokens held by `_tokenHolder` address.
@@ -364,8 +364,8 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
 
         callRecipent(0x0, _tokenHolder, _value, "", msg.sender, _operatorData, true);
 
-        Minted(_tokenHolder, _value, msg.sender, _operatorData);
-        if (mErc20compatible) { Transfer(0x0, _tokenHolder, _value); }
+        emit Minted(_tokenHolder, _value, msg.sender, _operatorData);
+        if (mErc20compatible) { emit Transfer(0x0, _tokenHolder, _value); }
     }
 
     /// @notice Burns `_value` tokens from `_tokenHolder`
@@ -379,8 +379,8 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
         mBalances[_tokenHolder] = mBalances[_tokenHolder].sub(_value);
         mTotalSupply = mTotalSupply.sub(_value);
 
-        Burned(_tokenHolder, _value);
-        if (mErc20compatible) { Transfer(_tokenHolder, 0x0, _value); }
+        emit Burned(_tokenHolder, _value);
+        if (mErc20compatible) { emit Transfer(_tokenHolder, 0x0, _value); }
     }
 
     /* -- ERC20 Compatible Methods -- */
@@ -441,7 +441,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     /// @return `true`, if the approve can't be done, it should fail.
     function approve(address _spender, uint256 _value) public erc20 returns (bool success) {
         mAllowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -459,7 +459,7 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
     //
     /// @notice Internal function that ensures `_value` is multiple of the granularity
     /// @param _value The quantity that want's to be checked
-    function requireMultiple(uint256 _value) internal {
+    function requireMultiple(uint256 _value) internal view {
         require(_value.div(mGranularity).mul(mGranularity) == _value);
     }
 
@@ -503,8 +503,8 @@ contract ReferenceToken is Owned, Ierc20, Ierc777, EIP820Implementer {
 
         callRecipent(_from, _to, _value, _userData, _operator, _operatorData, _preventLocking);
 
-        Sent(_from, _to, _value, _userData, _operator, _operatorData);
-        if (mErc20compatible) { Transfer(_from, _to, _value); }
+        emit Sent(_from, _to, _value, _userData, _operator, _operatorData);
+        if (mErc20compatible) { emit Transfer(_from, _to, _value); }
     }
 
     /// @notice Helper function that checks for ITokenRecipient on the recipient and calls it.
