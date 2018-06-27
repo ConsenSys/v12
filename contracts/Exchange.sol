@@ -229,7 +229,7 @@ contract Exchange is Owned {
 
     function resetInactivityTimer() public returns (bool) {
         lastActiveTransaction[msg.sender] = block.number;
-        InactivityReset(msg.sender);
+        emit InactivityReset(msg.sender);
         return true;
     }
 
@@ -316,7 +316,7 @@ contract Exchange is Owned {
         protectedFunds[token] = protectedFunds[token].sub(amount);
         if (token == address(0)) require(target.send(amount));
         else require(Token(token).transfer(target, amount));
-        Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+        emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
         return true;
     }
 
@@ -327,7 +327,7 @@ contract Exchange is Owned {
         amount = amount.sub(amount % EIP777(token).granularity());
         protectedFunds[token] = protectedFunds[token].sub(amount);
         EIP777(token).send(target, amount);
-        Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+        emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
         return true;
     }
 
@@ -434,7 +434,7 @@ contract Exchange is Owned {
         orderFills[orderHash] = orderFills[orderHash].add(tradeValues[4]);
         lastActiveTransaction[tradeAddresses[2]] = block.number;
         lastActiveTransaction[tradeAddresses[3]] = block.number;
-        Trade(tradeAddresses[0], tradeAddresses[1], tradeAddresses[2], tradeAddresses[3], tradeValues[4], orderHash);
+        emit Trade(tradeAddresses[0], tradeAddresses[1], tradeAddresses[2], tradeAddresses[3], tradeValues[4], orderHash);
         return true;
     }
 
