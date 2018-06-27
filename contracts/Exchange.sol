@@ -384,6 +384,7 @@ contract Exchange is Owned {
     //     require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
     //     bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
     //     require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
+    
     //     bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
     //     require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
     //     require(!traded[tradeHash]);
@@ -408,6 +409,35 @@ contract Exchange is Owned {
     //     Trade(tradeAddresses[0], tradeAddresses[1], tradeAddresses[2], tradeAddresses[3], tradeValues[4], orderHash);
     //     return true;
     // }
+
+    function addBuy(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] r) public onlyAdmin returns (bool) {
+        /* amount is in amountBuy terms */
+        /* tradeValues
+          [0] amountBuy
+          [1] amountSell
+          [2] expires
+          [3] nonce
+          [4] amount
+          [5] tradeNonce
+          [6] fee
+        tradeAddressses
+          [0] tokenBuy
+          [1] tokenSell
+          [2] user (address)
+        */
+
+        //Has not expired
+        require(block.number < tradeValues[2]);
+
+        //Check the users order that has been submitted as invalid
+        require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
+
+        //Check the valid hash
+        bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
+        require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
+        
+
+    }
 
     function trade(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
         /* amount is in amountBuy terms */
@@ -439,13 +469,15 @@ contract Exchange is Owned {
         //bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
         //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
         
+        //Removed trade
         //require(!traded[tradeHash]);
         
         //traded[tradeHash] = true;
 
+        //Set some miniumum
         if (tradeValues[6] > 10 finney) tradeValues[6] = 10 finney;
         
-        //
+        //removed takers
         //if (tradeValues[7] > 1 ether) tradeValues[7] = 1 ether;
         
         //
@@ -475,6 +507,7 @@ contract Exchange is Owned {
         //tokens[tradeAddresses[1]][tradeAddresses[3]] = tokens[tradeAddresses[1]][tradeAddresses[3]].add(amountSellAdjusted.sub(fee));
         //tokens[tradeAddresses[1]][feeAccount] = tokens[tradeAddresses[1]][feeAccount].add(fee);
         
+        //
         orderFills[orderHash] = orderFills[orderHash].add(tradeValues[4]);
         lastActiveTransaction[tradeAddresses[2]] = block.number;
         //lastActiveTransaction[tradeAddresses[3]] = block.number;
