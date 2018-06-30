@@ -212,7 +212,6 @@ describe('IDEX contract v2 updates', () => {
       }),
   );
   
-  
   describe('trade function', () => {
     before(() =>
       sendEther({
@@ -301,13 +300,12 @@ describe('IDEX contract v2 updates', () => {
     it('change to limit order', () => {
       const contractAddress = exchangeContract;
       const tokenBuy = ETH_ADDRESS;
-      const amoutBuy = '0';
+      const amountBuy = '0';
       const tokenSell = erc20Contract;
       const amountSell = '100';
       const expires = '10000';
       const nonce = '0';
 
-      
       const bob = bobWallet.getAddressString();
       //const carol = carolWallet.getAddressString();
       
@@ -421,7 +419,7 @@ describe('IDEX contract v2 updates', () => {
               feeMake,
               feeTake,
             ],
-            [tokenBuy, tokenSell, user, bob],
+            [tokenBuy, tokenSell, alice, bob],
             [v, tradeV],
             [r, s, tradeR, tradeS],
           ],
