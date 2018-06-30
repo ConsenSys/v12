@@ -179,32 +179,32 @@ contract Exchange is Owned {
     event Transfer(address token, address recipient);
     event InactivityReset(address user);
 
-    // modifier underInactivityCap(uint256 blocks) {
-    //     require(blocks <= INACTIVITY_CAP);
-    //     _;
-    // }
+    modifier underInactivityCap(uint256 blocks) {
+        require(blocks <= INACTIVITY_CAP);
+        _;
+    }
 
-    // function setInactivityReleasePeriod(uint256 expiry) public onlyOwner underInactivityCap(expiry) returns (bool) {
-    //     inactivityReleasePeriod = expiry;
-    //     return true;
-    // }
+    function setInactivityReleasePeriod(uint256 expiry) public onlyOwner underInactivityCap(expiry) returns (bool) {
+        inactivityReleasePeriod = expiry;
+        return true;
+    }
 
-    // function setInactivityReleasePeriodForToken(address token, bool isActive, uint256 blocks) public onlyOwner underInactivityCap(blocks) returns (bool) {
-    //     inactivityReleaseOverride[token].isActive = isActive;
-    //     inactivityReleaseOverride[token].blocks = blocks;
-    //     return true;
-    // }
+    function setInactivityReleasePeriodForToken(address token, bool isActive, uint256 blocks) public onlyOwner underInactivityCap(blocks) returns (bool) {
+        inactivityReleaseOverride[token].isActive = isActive;
+        inactivityReleaseOverride[token].blocks = blocks;
+        return true;
+    }
 
-    // modifier eligibleForRelease(address user, address token) {
-    //     require(block.number.sub(lastActiveTransaction[user]) >= (inactivityReleaseOverride[token].isActive ? inactivityReleaseOverride[token].blocks : inactivityReleasePeriod));
-    //     _;
-    // }
+    modifier eligibleForRelease(address user, address token) {
+        require(block.number.sub(lastActiveTransaction[user]) >= (inactivityReleaseOverride[token].isActive ? inactivityReleaseOverride[token].blocks : inactivityReleasePeriod));
+        _;
+    }
 
-    // function resetInactivityTimer() public returns (bool) {
-    //     lastActiveTransaction[msg.sender] = block.number;
-    //     emit InactivityReset(msg.sender);
-    //     return true;
-    // }
+    function resetInactivityTimer() public returns (bool) {
+        lastActiveTransaction[msg.sender] = block.number;
+        emit InactivityReset(msg.sender);
+        return true;
+    }
 
     // constructor(address feeAccount_) public {
     //     feeAccount = feeAccount_;
@@ -216,175 +216,176 @@ contract Exchange is Owned {
         //registerEIP777Interface();
     }
 
-    // function setFeeAccount(address feeAccount_) public onlyOwner returns (bool) {
-    //     feeAccount = feeAccount_;
-    //     return true;
-    // }
+    function setFeeAccount(address feeAccount_) public onlyOwner returns (bool) {
+        feeAccount = feeAccount_;
+        return true;
+    }
 
-    // function setThirdPartyDepositorDisabled(bool disabled) external returns (bool) {
-    //     thirdPartyDepositorDisabled[msg.sender] = disabled;
-    //     return true;
-    // }
+    function setThirdPartyDepositorDisabled(bool disabled) external returns (bool) {
+        thirdPartyDepositorDisabled[msg.sender] = disabled;
+        return true;
+    }
 
-    // function withdrawUnprotectedFunds(address token, address target, uint256 amount, bool isEIP777) public onlyOwner returns (bool) {
-    //     require(Token(token).balanceOf(this).sub(protectedFunds[token]) >= amount);
-    //     if (isEIP777) EIP777(token).send(target, amount);
-    //     else require(Token(token).transfer(target, amount));
-    //     return true;
-    // }
+    function withdrawUnprotectedFunds(address token, address target, uint256 amount, bool isEIP777) public onlyOwner returns (bool) {
+        require(Token(token).balanceOf(this).sub(protectedFunds[token]) >= amount);
+        if (isEIP777) EIP777(token).send(target, amount);
+        else require(Token(token).transfer(target, amount));
+        return true;
+    }
 
-    // function setAdmin(address admin, bool isAdmin) public onlyOwner {
-    //     admins[admin] = isAdmin;
-    // }
+    function setAdmin(address admin, bool isAdmin) public onlyOwner {
+        admins[admin] = isAdmin;
+    }
 
-    // modifier onlyAdmin {
-    //     require(msg.sender == owner || admins[msg.sender]);
-    //     _;
-    // }
+    modifier onlyAdmin {
+        require(msg.sender == owner || admins[msg.sender]);
+        _;
+    }
 
-    // function depositToken(address token, address target, uint256 amount) public returns (bool) {
-    //     address _target = target;
-    //     if (_target == 0x0) {
-    //         _target = msg.sender;
-    //     }
+    //*** */
+    function depositToken(address token, address target, uint256 amount) public returns (bool) {
+        address _target = target;
+        if (_target == 0x0) {
+            _target = msg.sender;
+        }
 
-    //     require(acceptDeposit(token, _target, amount));
-    //     require(Token(token).transferFrom(msg.sender, this, amount));
-    //     return true;
-    // }
+        require(acceptDeposit(token, _target, amount));
+        require(Token(token).transferFrom(msg.sender, this, amount));
+        return true;
+    }
 
-    // function acceptDeposit(address token, address target, uint256 amount) internal returns (bool) {
-    //     require(!thirdPartyDepositorDisabled[msg.sender] || msg.sender == target);
-    //     tokens[token][target] = tokens[token][target].add(amount);
-    //     protectedFunds[token] = protectedFunds[token].add(amount);
-    //     lastActiveTransaction[target] = block.number;
-    //     emit Deposit(token, target, amount, tokens[token][target]);
-    //     return true;
-    // }
+    function acceptDeposit(address token, address target, uint256 amount) internal returns (bool) {
+        require(!thirdPartyDepositorDisabled[msg.sender] || msg.sender == target);
+        tokens[token][target] = tokens[token][target].add(amount);
+        protectedFunds[token] = protectedFunds[token].add(amount);
+        lastActiveTransaction[target] = block.number;
+        emit Deposit(token, target, amount, tokens[token][target]);
+        return true;
+    }
 
-    // function deposit(address target) public payable returns (bool) {
-    //     address _target = target;
-    //     if (_target == 0x0) {
-    //         _target = msg.sender;
-    //     }
+    function deposit(address target) public payable returns (bool) {
+        address _target = target;
+        if (_target == 0x0) {
+            _target = msg.sender;
+        }
 
-    //     require(acceptDeposit(0x0, _target, msg.value));
-    //     return true;
-    // }
+        require(acceptDeposit(0x0, _target, msg.value));
+        return true;
+    }
 
-    // function tokenFallback(address target, uint256 amount, bytes data) public {
-    //     address beneficiary = data.toAddress();
-    //     //if (beneficiary != 0x0) target = beneficiary;
-    //     address _target = target;
-    //     if (beneficiary != 0x0) {
-    //         _target = beneficiary;
-    //     }
-    //     require(acceptDeposit(msg.sender, _target, amount));
-    // }
+    function tokenFallback(address target, uint256 amount, bytes data) public {
+        address beneficiary = data.toAddress();
+        //if (beneficiary != 0x0) target = beneficiary;
+        address _target = target;
+        if (beneficiary != 0x0) {
+            _target = beneficiary;
+        }
+        require(acceptDeposit(msg.sender, _target, amount));
+    }
 
-    // function receiveApproval(address _from, uint256 _tokens, address _token, bytes /* _data */) public {
-    //     require(_token == msg.sender);
-    //     require(Token(_token).transferFrom(_from, this, _tokens));
-    //     require(acceptDeposit(_token, _from, _tokens));
-    // }
+    function receiveApproval(address _from, uint256 _tokens, address _token, bytes /* _data */) public {
+        require(_token == msg.sender);
+        require(Token(_token).transferFrom(_from, this, _tokens));
+        require(acceptDeposit(_token, _from, _tokens));
+    }
 
-    // function tokensReceived(address from, address to, uint256 amount, bytes userData, address /* operator */, bytes /* operatorData */) public {
-    //     require(to == address(this));
-    //     address beneficiary = userData.toAddress();
-    //     //if (beneficiary != 0x0) from = beneficiary;
-    //     address _from = from;
-    //     if (beneficiary != 0x0) {
-    //         _from = beneficiary;
-    //     }
-    //     require(acceptDeposit(msg.sender, _from, amount));
-    // }
+    function tokensReceived(address from, address to, uint256 amount, bytes userData, address /* operator */, bytes /* operatorData */) public {
+        require(to == address(this));
+        address beneficiary = userData.toAddress();
+        //if (beneficiary != 0x0) from = beneficiary;
+        address _from = from;
+        if (beneficiary != 0x0) {
+            _from = beneficiary;
+        }
+        require(acceptDeposit(msg.sender, _from, amount));
+    }
 
     // function registerEIP777Interface() internal {
     //     InterfaceImplementationRegistry(0x9aA513f1294c8f1B254bA1188991B4cc2EFE1D3B).setInterfaceImplementer(this, keccak256("ITokenRecipient"), this);
     // }
 
-    // function withdraw(address token, address target, uint256 amount) public eligibleForRelease(msg.sender, token) returns (bool) {
-    //     if (target == 0x0) target = msg.sender;
-    //     require(tokens[token][msg.sender] >= amount);
-    //     tokens[token][msg.sender] = tokens[token][msg.sender].sub(amount);
-    //     protectedFunds[token] = protectedFunds[token].sub(amount);
-    //     if (token == address(0)) require(target.send(amount));
-    //     else require(Token(token).transfer(target, amount));
-    //     emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
-    //     return true;
-    // }
+    function withdraw(address token, address target, uint256 amount) public eligibleForRelease(msg.sender, token) returns (bool) {
+        if (target == 0x0) target = msg.sender;
+        require(tokens[token][msg.sender] >= amount);
+        tokens[token][msg.sender] = tokens[token][msg.sender].sub(amount);
+        protectedFunds[token] = protectedFunds[token].sub(amount);
+        if (token == address(0)) require(target.send(amount));
+        else require(Token(token).transfer(target, amount));
+        emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+        return true;
+    }
 
-    // function withdrawEIP777(address token, address target, uint256 amount) public eligibleForRelease(msg.sender, token) returns (bool) {
-    //     if (target == 0x0) target = msg.sender;
-    //     require(tokens[token][msg.sender] >= amount);
-    //     tokens[token][msg.sender] = tokens[token][msg.sender].sub(amount);
-    //     amount = amount.sub(amount % EIP777(token).granularity());
-    //     protectedFunds[token] = protectedFunds[token].sub(amount);
-    //     EIP777(token).send(target, amount);
-    //     emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
-    //     return true;
-    // }
+    function withdrawEIP777(address token, address target, uint256 amount) public eligibleForRelease(msg.sender, token) returns (bool) {
+        if (target == 0x0) target = msg.sender;
+        require(tokens[token][msg.sender] >= amount);
+        tokens[token][msg.sender] = tokens[token][msg.sender].sub(amount);
+        amount = amount.sub(amount % EIP777(token).granularity());
+        protectedFunds[token] = protectedFunds[token].sub(amount);
+        EIP777(token).send(target, amount);
+        emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+        return true;
+    }
 
-    // function validateWithdrawalSignature(address token, uint256 amount, address user, address target, bool authorizeArbitraryFee, uint256 nonce, uint8 v, bytes32 r, bytes32 s) internal returns (bool) {
-    //     bytes32 hash = keccak256(this, token, amount, user, target, authorizeArbitraryFee, nonce);
-    //     require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == user);
-    //     require(!withdrawn[hash]);
-    //     withdrawn[hash] = true;
-    //     return true;
-    // }
+    function validateWithdrawalSignature(address token, uint256 amount, address user, address target, bool authorizeArbitraryFee, uint256 nonce, uint8 v, bytes32 r, bytes32 s) internal returns (bool) {
+        bytes32 hash = keccak256(this, token, amount, user, target, authorizeArbitraryFee, nonce);
+        require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == user);
+        require(!withdrawn[hash]);
+        withdrawn[hash] = true;
+        return true;
+    }
 
-    // function adminWithdraw(address token, uint256 amount, address user, address target, bool authorizeArbitraryFee, uint256 nonce, uint8 v, bytes32 r, bytes32 s, uint256 feeWithdrawal) public onlyAdmin returns (bool) {
-    //     require(validateWithdrawalSignature(token, amount, user, target, authorizeArbitraryFee, nonce, v, r, s));
-    //     if (target == 0x0) target = user;
-    //     if (feeWithdrawal > 100 finney && !authorizeArbitraryFee) feeWithdrawal = 100 finney;
-    //     require(feeWithdrawal <= 1 ether);
-    //     require(tokens[token][user] >= amount);
-    //     tokens[token][user] = tokens[token][user].sub(amount);
-    //     uint256 fee = feeWithdrawal.mul(amount) / 1 ether;
-    //     tokens[token][feeAccount] = tokens[token][feeAccount].add(fee);
-    //     amount = amount.sub(fee);
-    //     protectedFunds[token] = protectedFunds[token].sub(amount);
-    //     if (token == address(0)) require(target.send(amount));
-    //     else require(Token(token).transfer(target, amount));
-    //     lastActiveTransaction[user] = block.number;
-    //     return true;
-    // }
+    function adminWithdraw(address token, uint256 amount, address user, address target, bool authorizeArbitraryFee, uint256 nonce, uint8 v, bytes32 r, bytes32 s, uint256 feeWithdrawal) public onlyAdmin returns (bool) {
+        require(validateWithdrawalSignature(token, amount, user, target, authorizeArbitraryFee, nonce, v, r, s));
+        if (target == 0x0) target = user;
+        if (feeWithdrawal > 100 finney && !authorizeArbitraryFee) feeWithdrawal = 100 finney;
+        require(feeWithdrawal <= 1 ether);
+        require(tokens[token][user] >= amount);
+        tokens[token][user] = tokens[token][user].sub(amount);
+        uint256 fee = feeWithdrawal.mul(amount) / 1 ether;
+        tokens[token][feeAccount] = tokens[token][feeAccount].add(fee);
+        amount = amount.sub(fee);
+        protectedFunds[token] = protectedFunds[token].sub(amount);
+        if (token == address(0)) require(target.send(amount));
+        else require(Token(token).transfer(target, amount));
+        lastActiveTransaction[user] = block.number;
+        return true;
+    }
 
-    // function adminWithdrawEIP777(address token, uint256 amount, address user, address target, bool authorizeArbitraryFee, uint256 nonce, uint8 v, bytes32 r, bytes32 s, uint256 feeWithdrawal) public onlyAdmin returns (bool) {
-    //     require(validateWithdrawalSignature(token, amount, user, target, authorizeArbitraryFee, nonce, v, r, s));
-    //     if (target == 0x0) target = user;
-    //     if (feeWithdrawal > 100 finney && !authorizeArbitraryFee) feeWithdrawal = 100 finney;
-    //     require(feeWithdrawal <= 1 ether);
-    //     require(tokens[token][user] >= amount);
-    //     tokens[token][user] = tokens[token][user].sub(amount);
-    //     uint256 fee = feeWithdrawal.mul(amount) / 1 ether;
-    //     tokens[token][feeAccount] = tokens[token][feeAccount].add(fee);
-    //     amount = amount.sub(fee);
-    //     amount = amount.sub(amount % EIP777(token).granularity());
-    //     protectedFunds[token] = protectedFunds[token].sub(amount);
-    //     EIP777(token).send(target, amount);
-    //     lastActiveTransaction[user] = block.number;
-    //     return true;
-    // }
+    function adminWithdrawEIP777(address token, uint256 amount, address user, address target, bool authorizeArbitraryFee, uint256 nonce, uint8 v, bytes32 r, bytes32 s, uint256 feeWithdrawal) public onlyAdmin returns (bool) {
+        require(validateWithdrawalSignature(token, amount, user, target, authorizeArbitraryFee, nonce, v, r, s));
+        if (target == 0x0) target = user;
+        if (feeWithdrawal > 100 finney && !authorizeArbitraryFee) feeWithdrawal = 100 finney;
+        require(feeWithdrawal <= 1 ether);
+        require(tokens[token][user] >= amount);
+        tokens[token][user] = tokens[token][user].sub(amount);
+        uint256 fee = feeWithdrawal.mul(amount) / 1 ether;
+        tokens[token][feeAccount] = tokens[token][feeAccount].add(fee);
+        amount = amount.sub(fee);
+        amount = amount.sub(amount % EIP777(token).granularity());
+        protectedFunds[token] = protectedFunds[token].sub(amount);
+        EIP777(token).send(target, amount);
+        lastActiveTransaction[user] = block.number;
+        return true;
+    }
 
-    // function transfer(address token, uint256 amount, address user, address target, uint256 nonce, uint8 v, bytes32 r, bytes32 s, uint256 feeTransfer) public onlyAdmin returns (bool success) {
-    //     require(target != 0x0);
-    //     bytes32 hash = keccak256("\x19IDEX Signed Transfer:\n32", keccak256(this, token, amount, user, target, nonce));
-    //     require(!transferred[hash]);
-    //     transferred[hash] = true;
-    //     require(ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)), v, r, s) == user);
-    //     if (feeTransfer > 100 finney) feeTransfer = 100 finney;
-    //     require(tokens[token][user] >= amount);
-    //     tokens[token][user] = tokens[token][user].sub(amount);
-    //     uint256 fee = feeTransfer.mul(amount) / 1 ether;
-    //     tokens[token][feeAccount] = tokens[token][feeAccount].add(fee);
-    //     amount = amount.sub(fee);
-    //     tokens[token][target] = tokens[token][target].add(amount);
-    //     lastActiveTransaction[user] = block.number;
-    //     lastActiveTransaction[target] = block.number;
-    //     emit Transfer(token, target);
-    //     return true;
-    // }
+    function transfer(address token, uint256 amount, address user, address target, uint256 nonce, uint8 v, bytes32 r, bytes32 s, uint256 feeTransfer) public onlyAdmin returns (bool success) {
+        require(target != 0x0);
+        bytes32 hash = keccak256("\x19IDEX Signed Transfer:\n32", keccak256(this, token, amount, user, target, nonce));
+        require(!transferred[hash]);
+        transferred[hash] = true;
+        require(ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)), v, r, s) == user);
+        if (feeTransfer > 100 finney) feeTransfer = 100 finney;
+        require(tokens[token][user] >= amount);
+        tokens[token][user] = tokens[token][user].sub(amount);
+        uint256 fee = feeTransfer.mul(amount) / 1 ether;
+        tokens[token][feeAccount] = tokens[token][feeAccount].add(fee);
+        amount = amount.sub(fee);
+        tokens[token][target] = tokens[token][target].add(amount);
+        lastActiveTransaction[user] = block.number;
+        lastActiveTransaction[target] = block.number;
+        emit Transfer(token, target);
+        return true;
+    }
 
     // function trade(uint256[8] tradeValues, address[4] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
     //     /* amount is in amountBuy terms */
@@ -432,14 +433,14 @@ contract Exchange is Owned {
     //     return true;
     // }
 
-    // function cancel(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, address user, uint256 nonce, uint256 expires, uint8 v, bytes32 r, bytes32 s) public onlyAdmin returns (bool) {
-    //     bytes32 orderHash = keccak256(abi.encodePacked(this, tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user));
-    //     bytes32 hash = keccak256(abi.encodePacked("\x19IDEX Signed Cancel:\n32", orderHash));
-    //     require(ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)), v, r, s) == user);
-    //     orderFills[orderHash] = amountBuy;
-    //     emit Cancel(user, orderHash, nonce);
-    //     return true;
-    // }
+    function cancel(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, address user, uint256 nonce, uint256 expires, uint8 v, bytes32 r, bytes32 s) public onlyAdmin returns (bool) {
+        bytes32 orderHash = keccak256(abi.encodePacked(this, tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user));
+        bytes32 hash = keccak256(abi.encodePacked("\x19IDEX Signed Cancel:\n32", orderHash));
+        require(ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)), v, r, s) == user);
+        orderFills[orderHash] = amountBuy;
+        emit Cancel(user, orderHash, nonce);
+        return true;
+    }
 
     function() external {
         revert();
