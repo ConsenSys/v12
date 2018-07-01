@@ -56,25 +56,27 @@ interface DepositReceiver {
 library BytesToAddress {
     function toAddress(bytes _address) internal pure returns (address) {
         if (_address.length < 20) return address(0);
-            uint160 m = 0;
-            uint160 b = 0;
-            for (uint8 i = 0; i < 20; i++) {
-                m *= 256;
-                b = uint160(_address[i]);
-                m += (b);
-            }
+
+        uint160 m = 0;
+        uint160 b = 0;
+        for (uint8 i = 0; i < 20; i++) {
+            m *= 256;
+            b = uint160(_address[i]);
+            m += (b);
+        }
+
         return address(m);
     }
 }
 
 library AddressToBytes {
     function toBytes(address a) internal pure returns (bytes b) {
-      assembly {
-          let m := mload(0x40)
-          mstore(add(m, 20), xor(0x140000000000000000000000000000000000000000, a))
-          mstore(0x40, add(m, 52))
-          b := m
-      }
+        assembly {
+            let m := mload(0x40)
+            mstore(add(m, 20), xor(0x140000000000000000000000000000000000000000, a))
+            mstore(0x40, add(m, 52))
+            b := m
+        }
     }
 }
 
@@ -87,7 +89,7 @@ contract DepositProxy {
     constructor(address _exchange, address _beneficiary) public {
         exchange = _exchange;
         beneficiary = _beneficiary;
-        registerEIP777Interface();
+        //registerEIP777Interface();
     }
 
     function tokenFallback(address /* sender */, uint256 amount, bytes /* data */) public {
@@ -136,10 +138,16 @@ contract Exchange is Owned {
     event ProxyCreated(address beneficiary, address proxyAddress);
 
     function createDepositProxy(address target) public returns (address) {
-        if (target == 0x0) target = msg.sender;
-        address dp = address(new DepositProxy(this, target));
-        emit ProxyCreated(target, address(dp));
-        return address(dp);
+        address _target = target;
+        if (_target == 0x0) {
+            _target = msg.sender;
+        }
+
+        //address dp = address(new DepositProxy(this, _target));
+        //emit ProxyCreated(_target, address(dp));
+        // return address(dp);
+
+        return 0x00;
     }
 
     function invalidateOrdersBefore(address user, uint256 nonce) public onlyAdmin {
@@ -199,13 +207,20 @@ contract Exchange is Owned {
 
     function resetInactivityTimer() public returns (bool) {
         lastActiveTransaction[msg.sender] = block.number;
-        InactivityReset(msg.sender);
+        emit InactivityReset(msg.sender);
         return true;
     }
 
-    function constructor(address feeAccount_) public {
-        feeAccount = feeAccount_;
-        registerEIP777Interface();
+    // constructor(address feeAccount_) public {
+    //     feeAccount = feeAccount_;
+    //     registerEIP777Interface();
+    // }
+
+    constructor(address feeAccount_) public {
+        //feeAccount = feeAccount_;
+        //registerEIP777Interface();
+        //feeAccount = feeAccount_;
+        //registerEIP777Interface();
     }
 
     function setFeeAccount(address feeAccount_) public onlyOwner returns (bool) {
@@ -234,9 +249,14 @@ contract Exchange is Owned {
         _;
     }
 
+    //*** */
     function depositToken(address token, address target, uint256 amount) public returns (bool) {
-        if (target == 0x0) target = msg.sender;
-        require(acceptDeposit(token, target, amount));
+        address _target = target;
+        if (_target == 0x0) {
+            _target = msg.sender;
+        }
+
+        require(acceptDeposit(token, _target, amount));
         require(Token(token).transferFrom(msg.sender, this, amount));
         return true;
     }
@@ -251,15 +271,23 @@ contract Exchange is Owned {
     }
 
     function deposit(address target) public payable returns (bool) {
-        if (target == 0x0) target = msg.sender;
-        require(acceptDeposit(0x0, target, msg.value));
+        address _target = target;
+        if (_target == 0x0) {
+            _target = msg.sender;
+        }
+
+        require(acceptDeposit(0x0, _target, msg.value));
         return true;
     }
 
     function tokenFallback(address target, uint256 amount, bytes data) public {
         address beneficiary = data.toAddress();
-        if (beneficiary != 0x0) target = beneficiary;
-        require(acceptDeposit(msg.sender, target, amount));
+        //if (beneficiary != 0x0) target = beneficiary;
+        address _target = target;
+        if (beneficiary != 0x0) {
+            _target = beneficiary;
+        }
+        require(acceptDeposit(msg.sender, _target, amount));
     }
 
     function receiveApproval(address _from, uint256 _tokens, address _token, bytes /* _data */) public {
@@ -271,6 +299,12 @@ contract Exchange is Owned {
     function tokensReceived(address from, address to, uint256 amount, bytes userData, address /* operator */, bytes /* operatorData */) public {
         require(to == address(this));
         address beneficiary = userData.toAddress();
+        //if (beneficiary != 0x0) from = beneficiary;
+        address _from = from;
+        if (beneficiary != 0x0) {
+            _from = beneficiary;
+        }
+        require(acceptDeposit(msg.sender, _from, amount));
         if (beneficiary != 0x0) from = beneficiary;
         require(acceptDeposit(msg.sender, from, amount));
     }
@@ -278,6 +312,10 @@ contract Exchange is Owned {
     function registerEIP777Interface() internal {
         InterfaceImplementationRegistry(0x9aA513f1294c8f1B254bA1188991B4cc2EFE1D3B).setInterfaceImplementer(this, keccak256("ITokenRecipient"), this);
     }
+
+    // function registerEIP777Interface() internal {
+    //     InterfaceImplementationRegistry(0x9aA513f1294c8f1B254bA1188991B4cc2EFE1D3B).setInterfaceImplementer(this, keccak256("ITokenRecipient"), this);
+    // }
 
     function withdraw(address token, address target, uint256 amount) public eligibleForRelease(msg.sender, token) returns (bool) {
         if (target == 0x0) target = msg.sender;
@@ -348,7 +386,7 @@ contract Exchange is Owned {
         bytes32 hash = keccak256("\x19IDEX Signed Transfer:\n32", keccak256(this, token, amount, user, target, nonce));
         require(!transferred[hash]);
         transferred[hash] = true;
-        require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == user);
+        require(ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)), v, r, s) == user);
         if (feeTransfer > 100 finney) feeTransfer = 100 finney;
         require(tokens[token][user] >= amount);
         tokens[token][user] = tokens[token][user].sub(amount);
@@ -434,7 +472,7 @@ contract Exchange is Owned {
 
         //Check the valid hash
         bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
-        require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
+        //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
         
 
     }
@@ -480,14 +518,16 @@ contract Exchange is Owned {
         //removed takers
         //if (tradeValues[7] > 1 ether) tradeValues[7] = 1 ether;
         
-        //
+        //Ammount buy [4] must be greater than amount buy [0]
         require(orderFills[orderHash].add(tradeValues[4]) <= tradeValues[0]);
         
+
         //require(tokens[tradeAddresses[0]][tradeAddresses[3]] >= tradeValues[4]);
+
+        //
         require(tokens[tradeAddresses[1]][tradeAddresses[2]] >= (tradeValues[1].mul(tradeValues[4]) / tradeValues[0]));
         
         //tokens[tradeAddresses[0]][tradeAddresses[3]] = tokens[tradeAddresses[0]][tradeAddresses[3]].sub(tradeValues[4]);
-        
         
         
         
@@ -517,9 +557,9 @@ contract Exchange is Owned {
     }
 
     function cancel(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, address user, uint256 nonce, uint256 expires, uint8 v, bytes32 r, bytes32 s) public onlyAdmin returns (bool) {
-        bytes32 orderHash = keccak256(this, tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user);
-        bytes32 hash = keccak256("\x19IDEX Signed Cancel:\n32", orderHash);
-        require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == user);
+        bytes32 orderHash = keccak256(abi.encodePacked(this, tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user));
+        bytes32 hash = keccak256(abi.encodePacked("\x19IDEX Signed Cancel:\n32", orderHash));
+        require(ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)), v, r, s) == user);
         orderFills[orderHash] = amountBuy;
         
         emit Cancel(user, orderHash, nonce);
