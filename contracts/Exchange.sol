@@ -136,22 +136,24 @@ contract Exchange is Owned {
     mapping (address => uint256) public invalidOrder;
     event ProxyCreated(address beneficiary, address proxyAddress);
 
-    // function createDepositProxy(address target) public returns (address) {
-    //     address _target = target;
-    //     if (_target == 0x0) {
-    //         _target = msg.sender;
-    //     }
+    function createDepositProxy(address target) public returns (address) {
+        address _target = target;
+        if (_target == 0x0) {
+            _target = msg.sender;
+        }
 
-    //     address dp = address(new DepositProxy(this, _target));
-    //     emit ProxyCreated(_target, address(dp));
-    //     return address(dp);
-    // }
+        //address dp = address(new DepositProxy(this, _target));
+        //emit ProxyCreated(_target, address(dp));
+        // return address(dp);
 
-    // function invalidateOrdersBefore(address user, uint256 nonce) public onlyAdmin {
-    //     require(nonce >= invalidOrder[user]);
-    //     invalidOrder[user] = nonce;
-    //     lastActiveTransaction[user] = block.number;
-    // }
+        return 0x00;
+    }
+
+    function invalidateOrdersBefore(address user, uint256 nonce) public onlyAdmin {
+        require(nonce >= invalidOrder[user]);
+        invalidOrder[user] = nonce;
+        lastActiveTransaction[user] = block.number;
+    }
 
     mapping (address => mapping (address => uint256)) public tokens; //mapping of token addresses to mapping of account balances
 
