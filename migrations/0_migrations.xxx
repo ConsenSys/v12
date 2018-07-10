@@ -1,0 +1,6 @@
+var Exchange = artifacts.require("Exchange");
+
+module.exports = function(deployer) {
+  // deployment steps
+  deployer.deploy(Exchange('0x1b70ea1e5f0ff005794aaa79465d4b7d2c664e36'));
+};
