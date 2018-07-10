@@ -137,18 +137,18 @@ contract Exchange is Owned {
     
     event ProxyCreated(address beneficiary, address proxyAddress);
 
-    function createDepositProxy(address target) public returns (address) {
-        address _target = target;
-        if (_target == 0x0) {
-            _target = msg.sender;
-        }
+    // function createDepositProxy(address target) public returns (address) {
+    //     address _target = target;
+    //     if (_target == 0x0) {
+    //         _target = msg.sender;
+    //     }
 
-        //address dp = address(new DepositProxy(this, _target));
-        //emit ProxyCreated(_target, address(dp));
-        // return address(dp);
+    //     //address dp = address(new DepositProxy(this, _target));
+    //     //emit ProxyCreated(_target, address(dp));
+    //     // return address(dp);
 
-        return 0x00;
-    }
+    //     return 0x00;
+    // }
 
     function invalidateOrdersBefore(address user, uint256 nonce) public onlyAdmin {
         require(nonce >= invalidOrder[user]);
@@ -212,8 +212,8 @@ contract Exchange is Owned {
     }
 
     constructor(address feeAccount_) public {
-        //feeAccount = feeAccount_;
-        //registerEIP777Interface();
+        feeAccount = feeAccount_;
+        registerEIP777Interface();
     }
 
     function setFeeAccount(address feeAccount_) public onlyOwner returns (bool) {
@@ -275,7 +275,7 @@ contract Exchange is Owned {
 
     function tokenFallback(address target, uint256 amount, bytes data) public {
         address beneficiary = data.toAddress();
-        //if (beneficiary != 0x0) target = beneficiary;
+
         address _target = target;
         if (beneficiary != 0x0) {
             _target = beneficiary;
@@ -292,7 +292,7 @@ contract Exchange is Owned {
     function tokensReceived(address from, address to, uint256 amount, bytes userData, address /* operator */, bytes /* operatorData */) public {
         require(to == address(this));
         address beneficiary = userData.toAddress();
-        //if (beneficiary != 0x0) from = beneficiary;
+        
         address _from = from;
         if (beneficiary != 0x0) {
             _from = beneficiary;
@@ -305,10 +305,6 @@ contract Exchange is Owned {
     function registerEIP777Interface() internal {
         InterfaceImplementationRegistry(0x9aA513f1294c8f1B254bA1188991B4cc2EFE1D3B).setInterfaceImplementer(this, keccak256("ITokenRecipient"), this);
     }
-
-    // function registerEIP777Interface() internal {
-    //     InterfaceImplementationRegistry(0x9aA513f1294c8f1B254bA1188991B4cc2EFE1D3B).setInterfaceImplementer(this, keccak256("ITokenRecipient"), this);
-    // }
 
     function withdraw(address token, address target, uint256 amount) public eligibleForRelease(msg.sender, token) returns (bool) {
         if (target == 0x0) target = msg.sender;
@@ -441,113 +437,113 @@ contract Exchange is Owned {
     //     return true;
     // }
 
-    function addBuy(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] r) public onlyAdmin returns (bool) {
-        /* amount is in amountBuy terms */
-        /* tradeValues
-          [0] amountBuy
-          [1] amountSell
-          [2] expires
-          [3] nonce
-          [4] amount
-          [5] tradeNonce
-          [6] fee
-        tradeAddressses
-          [0] tokenBuy
-          [1] tokenSell
-          [2] user (address)
-        */
+    // function addBuy(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] r) public onlyAdmin returns (bool) {
+    //     /* amount is in amountBuy terms */
+    //     /* tradeValues
+    //       [0] amountBuy
+    //       [1] amountSell
+    //       [2] expires
+    //       [3] nonce
+    //       [4] amount
+    //       [5] tradeNonce
+    //       [6] fee
+    //     tradeAddressses
+    //       [0] tokenBuy
+    //       [1] tokenSell
+    //       [2] user (address)
+    //     */
 
-        //Has not expired
-        require(block.number < tradeValues[2]);
+    //     //Has not expired
+    //     require(block.number < tradeValues[2]);
 
-        //Check the users order that has been submitted as invalid
-        require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
+    //     //Check the users order that has been submitted as invalid
+    //     require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
 
-        //Check the valid hash
-        bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
-        //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
-        
-
-    }
-
-    function trade(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
-        /* amount is in amountBuy terms */
-        /* tradeValues
-          [0] amountBuy
-          [1] amountSell
-          [2] expires
-          [3] nonce
-          [4] amount
-          [5] tradeNonce
-          [6] fee
-        tradeAddressses
-          [0] tokenBuy
-          [1] tokenSell
-          [2] user (address)
-        */
-
-        //Has not expired
-        require(block.number < tradeValues[2]);
-
-        //Check the oder has not be submitted as invalid
-        require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
-        
-        //Check the valid hash
-        bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
-        require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
-        
-        //Removed other addresses
-        //bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
-        //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
-        
-        //Removed trade
-        //require(!traded[tradeHash]);
-        
-        //traded[tradeHash] = true;
-
-        //Set some miniumum
-        if (tradeValues[6] > 10 finney) tradeValues[6] = 10 finney;
-        
-        //removed takers
-        //if (tradeValues[7] > 1 ether) tradeValues[7] = 1 ether;
-        
-        //Ammount buy [4] must be greater than amount buy [0]
-        require(orderFills[orderHash].add(tradeValues[4]) <= tradeValues[0]);
+    //     //Check the valid hash
+    //     bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
+    //     //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
         
 
-        //require(tokens[tradeAddresses[0]][tradeAddresses[3]] >= tradeValues[4]);
+    // }
 
-        //
-        require(tokens[tradeAddresses[1]][tradeAddresses[2]] >= (tradeValues[1].mul(tradeValues[4]) / tradeValues[0]));
+    // function trade(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
+    //     /* amount is in amountBuy terms */
+    //     /* tradeValues
+    //       [0] amountBuy
+    //       [1] amountSell
+    //       [2] expires
+    //       [3] nonce
+    //       [4] amount
+    //       [5] tradeNonce
+    //       [6] fee
+    //     tradeAddressses
+    //       [0] tokenBuy
+    //       [1] tokenSell
+    //       [2] user (address)
+    //     */
+
+    //     //Has not expired
+    //     require(block.number < tradeValues[2]);
+
+    //     //Check the oder has not be submitted as invalid
+    //     require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
         
-        //tokens[tradeAddresses[0]][tradeAddresses[3]] = tokens[tradeAddresses[0]][tradeAddresses[3]].sub(tradeValues[4]);
+    //     //Check the valid hash
+    //     bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
+    //     require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
+        
+    //     //Removed other addresses
+    //     //bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
+    //     //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
+        
+    //     //Removed trade
+    //     //require(!traded[tradeHash]);
+        
+    //     //traded[tradeHash] = true;
+
+    //     //Set some miniumum
+    //     if (tradeValues[6] > 10 finney) tradeValues[6] = 10 finney;
+        
+    //     //removed takers
+    //     //if (tradeValues[7] > 1 ether) tradeValues[7] = 1 ether;
+        
+    //     //Ammount buy [4] must be greater than amount buy [0]
+    //     require(orderFills[orderHash].add(tradeValues[4]) <= tradeValues[0]);
+        
+
+    //     //require(tokens[tradeAddresses[0]][tradeAddresses[3]] >= tradeValues[4]);
+
+    //     //
+    //     require(tokens[tradeAddresses[1]][tradeAddresses[2]] >= (tradeValues[1].mul(tradeValues[4]) / tradeValues[0]));
+        
+    //     //tokens[tradeAddresses[0]][tradeAddresses[3]] = tokens[tradeAddresses[0]][tradeAddresses[3]].sub(tradeValues[4]);
         
         
         
-        uint256 fee = tradeValues[4].mul(tradeValues[6]) / 1 ether;
+    //     uint256 fee = tradeValues[4].mul(tradeValues[6]) / 1 ether;
         
-        tokens[tradeAddresses[0]][tradeAddresses[2]] = tokens[tradeAddresses[0]][tradeAddresses[2]].add(tradeValues[4] - fee);
-        tokens[tradeAddresses[0]][feeAccount] = tokens[tradeAddresses[0]][feeAccount].add(fee);
-        tokens[tradeAddresses[1]][tradeAddresses[2]] = tokens[tradeAddresses[1]][tradeAddresses[2]].sub(tradeValues[1].mul(tradeValues[4]) / tradeValues[0]);
-        
-        
-        
-        //uint256 amountSellAdjusted = tradeValues[1].mul(tradeValues[4]) / tradeValues[0];
+    //     tokens[tradeAddresses[0]][tradeAddresses[2]] = tokens[tradeAddresses[0]][tradeAddresses[2]].add(tradeValues[4] - fee);
+    //     tokens[tradeAddresses[0]][feeAccount] = tokens[tradeAddresses[0]][feeAccount].add(fee);
+    //     tokens[tradeAddresses[1]][tradeAddresses[2]] = tokens[tradeAddresses[1]][tradeAddresses[2]].sub(tradeValues[1].mul(tradeValues[4]) / tradeValues[0]);
         
         
-        //uint256 takerFee = tradeValues[7].mul(amountSellAdjusted) / 1 ether;
         
-        //tokens[tradeAddresses[1]][tradeAddresses[3]] = tokens[tradeAddresses[1]][tradeAddresses[3]].add(amountSellAdjusted.sub(fee));
-        //tokens[tradeAddresses[1]][feeAccount] = tokens[tradeAddresses[1]][feeAccount].add(fee);
+    //     //uint256 amountSellAdjusted = tradeValues[1].mul(tradeValues[4]) / tradeValues[0];
         
-        //
-        orderFills[orderHash] = orderFills[orderHash].add(tradeValues[4]);
-        lastActiveTransaction[tradeAddresses[2]] = block.number;
-        //lastActiveTransaction[tradeAddresses[3]] = block.number;
         
-        emit Trade(tradeAddresses[0], tradeAddresses[1], tradeAddresses[2], tradeValues[4], orderHash);
-        return true;
-    }
+    //     //uint256 takerFee = tradeValues[7].mul(amountSellAdjusted) / 1 ether;
+        
+    //     //tokens[tradeAddresses[1]][tradeAddresses[3]] = tokens[tradeAddresses[1]][tradeAddresses[3]].add(amountSellAdjusted.sub(fee));
+    //     //tokens[tradeAddresses[1]][feeAccount] = tokens[tradeAddresses[1]][feeAccount].add(fee);
+        
+    //     //
+    //     orderFills[orderHash] = orderFills[orderHash].add(tradeValues[4]);
+    //     lastActiveTransaction[tradeAddresses[2]] = block.number;
+    //     //lastActiveTransaction[tradeAddresses[3]] = block.number;
+        
+    //     emit Trade(tradeAddresses[0], tradeAddresses[1], tradeAddresses[2], tradeValues[4], orderHash);
+    //     return true;
+    // }
 
     function cancel(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, address user, uint256 nonce, uint256 expires, uint8 v, bytes32 r, bytes32 s) public onlyAdmin returns (bool) {
         bytes32 orderHash = keccak256(abi.encodePacked(this, tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user));
