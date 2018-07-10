@@ -212,8 +212,6 @@ contract Exchange is Owned {
     }
 
     constructor(address feeAccount_) public {
-        feeAccount = feeAccount_;
-        //registerEIP777Interface();
         //feeAccount = feeAccount_;
         //registerEIP777Interface();
     }
