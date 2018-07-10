@@ -495,7 +495,7 @@ contract Exchange is Owned {
     //     return true;
     // }
 
-    function addAsk(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
+    function addBuy(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
         /* amount is in amountBuy terms */
         /* tradeValues
           [0] amountBuy
@@ -520,7 +520,7 @@ contract Exchange is Owned {
         //Check the valid hash
         bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
 
-        //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
+        require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
 
     //     bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
 

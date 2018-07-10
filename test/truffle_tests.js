@@ -17,5 +17,10 @@ contract('Exchange', function(accounts) {
       const actual = await this.exchange.feeAccount.call();
       assert.equal(actual, alice, "Fee account should be 0x521f76b5f95bc0b0acd8c2d27c1f48e5db97e0c2");
     });
+
+    // it("should add ask", async function () {
+    //   //const actual = await this.exchange.addAsk();
+    //   //assert.equal(actual, alice, "Fee account should be 0x521f76b5f95bc0b0acd8c2d27c1f48e5db97e0c2");
+    // });
   });
 });
