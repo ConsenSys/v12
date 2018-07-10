@@ -137,18 +137,19 @@ contract Exchange is Owned {
     
     event ProxyCreated(address beneficiary, address proxyAddress);
 
-    // function createDepositProxy(address target) public returns (address) {
-    //     address _target = target;
-    //     if (_target == 0x0) {
-    //         _target = msg.sender;
-    //     }
+    function createDepositProxy(address target) public returns (address) {
+        address _target = target;
+        if (_target == 0x0) {
+            _target = msg.sender;
+        }
 
-    //     //address dp = address(new DepositProxy(this, _target));
-    //     //emit ProxyCreated(_target, address(dp));
-    //     // return address(dp);
+        //address dp = address(new DepositProxy(this, _target));
+        //emit ProxyCreated(_target, address(dp));
+        //return address(dp);
 
-    //     return 0x00;
-    // }
+        emit ProxyCreated(_target, 0x00);
+        return 0x00;
+    }
 
     function invalidateOrdersBefore(address user, uint256 nonce) public onlyAdmin {
         require(nonce >= invalidOrder[user]);
