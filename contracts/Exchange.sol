@@ -211,13 +211,8 @@ contract Exchange is Owned {
         return true;
     }
 
-    // constructor(address feeAccount_) public {
-    //     feeAccount = feeAccount_;
-    //     registerEIP777Interface();
-    // }
-
     constructor(address feeAccount_) public {
-        //feeAccount = feeAccount_;
+        feeAccount = feeAccount_;
         //registerEIP777Interface();
         //feeAccount = feeAccount_;
         //registerEIP777Interface();
