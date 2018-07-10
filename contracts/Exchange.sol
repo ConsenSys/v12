@@ -147,11 +147,11 @@ contract Exchange is Owned {
     //     return address(dp);
     // }
 
-    // function invalidateOrdersBefore(address user, uint256 nonce) public onlyAdmin {
-    //     require(nonce >= invalidOrder[user]);
-    //     invalidOrder[user] = nonce;
-    //     lastActiveTransaction[user] = block.number;
-    // }
+    function invalidateOrdersBefore(address user, uint256 nonce) public onlyAdmin {
+        require(nonce >= invalidOrder[user]);
+        invalidOrder[user] = nonce;
+        lastActiveTransaction[user] = block.number;
+    }
 
     mapping (address => mapping (address => uint256)) public tokens; //mapping of token addresses to mapping of account balances
 
@@ -208,7 +208,7 @@ contract Exchange is Owned {
 
     constructor(address feeAccount_) public {
         feeAccount = feeAccount_;
-        //registerEIP777Interface();
+        registerEIP777Interface();
     }
 
     function setFeeAccount(address feeAccount_) public onlyOwner returns (bool) {
@@ -270,7 +270,7 @@ contract Exchange is Owned {
 
     function tokenFallback(address target, uint256 amount, bytes data) public {
         address beneficiary = data.toAddress();
-        //if (beneficiary != 0x0) target = beneficiary;
+        //refactor to suppress warnings
         address _target = target;
         if (beneficiary != 0x0) {
             _target = beneficiary;
@@ -287,7 +287,7 @@ contract Exchange is Owned {
     function tokensReceived(address from, address to, uint256 amount, bytes userData, address /* operator */, bytes /* operatorData */) public {
         require(to == address(this));
         address beneficiary = userData.toAddress();
-        //if (beneficiary != 0x0) from = beneficiary;
+        //refactor to suppress warnings
         address _from = from;
         if (beneficiary != 0x0) {
             _from = beneficiary;
@@ -295,9 +295,9 @@ contract Exchange is Owned {
         require(acceptDeposit(msg.sender, _from, amount));
     }
 
-    // function registerEIP777Interface() internal {
-    //     InterfaceImplementationRegistry(0x9aA513f1294c8f1B254bA1188991B4cc2EFE1D3B).setInterfaceImplementer(this, keccak256("ITokenRecipient"), this);
-    // }
+    function registerEIP777Interface() internal {
+        InterfaceImplementationRegistry(0x9aA513f1294c8f1B254bA1188991B4cc2EFE1D3B).setInterfaceImplementer(this, keccak256("ITokenRecipient"), this);
+    }
 
     function withdraw(address token, address target, uint256 amount) public eligibleForRelease(msg.sender, token) returns (bool) {
         if (target == 0x0) target = msg.sender;
