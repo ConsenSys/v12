@@ -185,6 +185,28 @@ contract Exchange is Owned {
     event Transfer(address token, address recipient);
     event InactivityReset(address user);
 
+
+    //[0] amountBuy
+    //[1] amountSell
+    //[2] expires
+    //[3] nonce
+    //[4] amount
+    //[5] tradeNonce
+    struct PendingTrade {
+        //bytes32 user;
+        uint256 amountBuy;
+        uint256 amountSell;
+        uint256 expires;
+        uint256 nonce;
+        uint256 amount;
+        uint256 tradeNonce;
+
+        uint256 added;
+        bool traded;
+    }
+
+    mapping(address => PendingTrade) public PendingTrades;
+
     modifier underInactivityCap(uint256 blocks) {
         require(blocks <= INACTIVITY_CAP);
         _;
@@ -214,6 +236,8 @@ contract Exchange is Owned {
 
     constructor(address feeAccount_) public {
         feeAccount = feeAccount_;
+
+        //ADD BACK AFTER TESTS
         //registerEIP777Interface();
     }
 
@@ -440,7 +464,7 @@ contract Exchange is Owned {
     // }
 
     //Orignal, breaks truffle
-    // function trade(uint256[8] tradeValues, address[4] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
+    function trade(uint256[8] tradeValues, address[4] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
     //     /* amount is in amountBuy terms */
     //     /* tradeValues
     //     [0] amountBuy
@@ -458,18 +482,28 @@ contract Exchange is Owned {
     //     [3] taker
     //     */
 
-    //     require(block.number < tradeValues[2]);
-    //     require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
+        // 2 expires
+        require(block.number < tradeValues[2]);
 
-    //     bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
+        //  3 nonce
+        require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
+
+        bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
+        //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
+
         
-    //     require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
-    //     bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
+        //require(ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", orderHash)), v[0], rs[0], rs[1]) == tradeAddresses[2]);
+        bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
 
-    //     require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
-    //     require(!traded[tradeHash]);
 
-    //     traded[tradeHash] = true;
+
+        //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
+        //require(!traded[tradeHash]);
+
+
+
+
+         //traded[tradeHash] = true;
     //     if (tradeValues[6] > 10 finney) tradeValues[6] = 10 finney;
     //     if (tradeValues[7] > 1 ether) tradeValues[7] = 1 ether;
         
@@ -493,9 +527,9 @@ contract Exchange is Owned {
     //     emit Trade(tradeAddresses[0], tradeAddresses[1], tradeAddresses[2], tradeAddresses[3], tradeValues[4], orderHash);
         
     //     return true;
-    // }
+    }
 
-    function addBuy(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
+    function addTrade(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
         /* amount is in amountBuy terms */
         /* tradeValues
           [0] amountBuy
@@ -511,21 +545,49 @@ contract Exchange is Owned {
           [2] user (address)
         */
 
-        //Has not expired
+        //uint256 AMOUNT_BUY = 0;
+        //uint256 AMOUNT_SELL = 1;
+        //uint256 EXPIRES = 2;
+        //uint256 NONCE = 3;
+        //uint256 AMOUNT = 4;
+        //uint256 TRADE_NONCE = 5;
+
+        //uint256 TOKEN_BUY = 0;
+        //uint256 TOKEN_SELL = 1;
+        //uint256 USER = 2;
+
+        // Has not expired
         require(block.number < tradeValues[2]);
 
-        //Check the users order that has been submitted as invalid
+        // Check the users order that has been submitted as invalid
         require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
 
-        //Check the valid hash
+        // Check the valid hash
+        //bytes32 orderHash = keccak256(this, tradeAddresses[TOKEN_BUY], tradeValues[AMOUNT_BUY], tradeAddresses[TOKEN_SELL], tradeValues[AMOUNT_SELL], tradeValues[EXPIRES], tradeValues[NONCE], tradeAddresses[USER]);
         bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
 
         require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
 
-    //     bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
+        //Add to "stack"
+        PendingTrades[tradeAddresses[2]] = PendingTrade(
+            tradeValues[0],
+            tradeValues[1],
+            tradeValues[2],
+            tradeValues[3],
+            tradeValues[4],
+            tradeValues[5],
+            now,
+            false
+        );
 
-    //     require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
-    //     require(!traded[tradeHash]);
+
+
+        //TODO:  RAISE AN EVENT
+
+        //bytes32 tradeHash = keccak256(orderHash, tradeValues[AMOUNT], tradeAddresses[3], tradeValues[5]);
+
+        //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) == tradeAddresses[3]);
+        //require(!traded[tradeHash]);
 
     //     traded[tradeHash] = true;
     //     if (tradeValues[6] > 10 finney) tradeValues[6] = 10 finney;
@@ -552,6 +614,14 @@ contract Exchange is Owned {
         
     //     return true;
     }
+
+    function excuteTrade(address user) public onlyAdmin {
+
+        require(PendingTrades[user].expires > now);
+
+
+    }
+
 
     // function trade(uint256[7] tradeValues, address[3] tradeAddresses, uint8[2] v, bytes32[4] rs) public onlyAdmin returns (bool) {
     //     /* amount is in amountBuy terms */

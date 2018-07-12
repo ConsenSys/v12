@@ -1287,6 +1287,7 @@ describe('IDEX contract v2', () => {
           }),
         ),
     );
+    
     it('can execute a trade', () => {
       const contractAddress = exchangeContract;
       const tokenBuy = ETH_ADDRESS;
