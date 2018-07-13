@@ -489,11 +489,13 @@ contract Exchange is Owned {
         require(invalidOrder[tradeAddresses[2]] <= tradeValues[3]);
 
         bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
-        //require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == tradeAddresses[2]);
+        bytes32 h = keccak256("\x19Ethereum Signed Message:\n32", orderHash);
+
+        address senderAddress = ecrecover(h, v[0], rs[0], rs[1]);
 
         
         //require(ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", orderHash)), v[0], rs[0], rs[1]) == tradeAddresses[2]);
-        bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
+        //bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]);
 
 
 
