@@ -208,7 +208,7 @@ contract Exchange is Owned {
 
     constructor(address feeAccount_) public {
         feeAccount = feeAccount_;
-        registerEIP777Interface();
+        //registerEIP777Interface();
     }
 
     function setFeeAccount(address feeAccount_) public onlyOwner returns (bool) {
