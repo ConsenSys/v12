@@ -10,7 +10,7 @@ light = false
 
 [rpc]
 disable = false
-port = 8646
+port = 8545
 interface = "local"
 cors = []
 apis = ["web3", "eth", "net", "parity", "traces", "rpc", "secretstore"]

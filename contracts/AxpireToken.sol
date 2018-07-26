@@ -3,11 +3,12 @@ pragma solidity ^0.4.23;
 import "./SafeMath.sol";
 import "./Ownable.sol";
 import "./ERC20.sol";
+import "./ContractReceiver.sol";
 
 /******************************************/
 /** Axpire TOKEN **/
 /******************************************/
-contract AxpireToken is ERC223,ERC20 {
+contract AxpireToken is ERC223, ERC20 {
 
     uint256 initialSupply= 350000000 * 10**18;
     string tokenName="aXpire Token";

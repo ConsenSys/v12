@@ -3,6 +3,7 @@ pragma solidity ^0.4.23;
 import "./SafeMath.sol";
 import "./Ownable.sol";
 import "./ERC223.sol";
+import "./TokenRecipient.sol";
 
 //Token Format
 contract ERC20 is Ownable {
