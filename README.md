@@ -17,4 +17,4 @@ mkdir contracts
 mkdir migrations
 mv *.sol contracts
 ```
-4. Copy `exchange.js` test for truffle to run
+4. Copy `exchange.js` test for truffle to run `truffle test`.  An EVM gas exception is thrown on the `Trade` function of the Exchange.sol contract.
