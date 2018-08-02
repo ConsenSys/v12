@@ -22,14 +22,19 @@ contract('DepositProxy', function(accounts) {
       assert.equal(actual, accounts[0], "Address should be 0x1b70ea1e5f0ff005794aaa79465d4b7d2c664e36");
     });
 
-    it("should receive approval", async function () {
-      //const actual = await this.depositProxy.receiveApproval('0x00');
-      
+    it("should receive tokens", async function () {
+      const actual = await this.depositProxy.exchange();
+      assert.equal(actual, accounts[0], "Address should be 0x1b70ea1e5f0ff005794aaa79465d4b7d2c664e36");
     });
 
-    it("should deposit all", async function () {
-      //const actual = await this.depositProxy.depositAll('0x00');
+    // it("should receive approval", async function () {
+    //   //const actual = await this.depositProxy.receiveApproval('0x00');
       
-    });
+    // });
+
+    // it("should deposit all", async function () {
+    //   //const actual = await this.depositProxy.depositAll('0x00');
+      
+    // });
   });
 });

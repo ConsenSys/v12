@@ -89,7 +89,7 @@ contract DepositProxy {
     constructor(address _exchange, address _beneficiary) public {
         exchange = _exchange;
         beneficiary = _beneficiary;
-        //registerEIP777Interface();
+        registerEIP777Interface();
     }
 
     function tokenFallback(address /* sender */, uint256 amount, bytes /* data */) public {
@@ -120,7 +120,7 @@ contract DepositProxy {
     }
 
     function registerEIP777Interface() internal {
-        InterfaceImplementationRegistry(0x9aA513f1294c8f1B254bA1188991B4cc2EFE1D3B).setInterfaceImplementer(this, keccak256("ITokenRecipient"), this);
+        //InterfaceImplementationRegistry(0x9aA513f1294c8f1B254bA1188991B4cc2EFE1D3B).setInterfaceImplementer(this, keccak256("ITokenRecipient"), this);
     }
     
     function () external payable {
@@ -136,16 +136,16 @@ contract Exchange is Owned {
     mapping (address => uint256) public invalidOrder;
     event ProxyCreated(address beneficiary, address proxyAddress);
 
-    // function createDepositProxy(address target) public returns (address) {
-    //     address _target = target;
-    //     if (_target == 0x0) {
-    //         _target = msg.sender;
-    //     }
+    function createDepositProxy(address target) public returns (address) {
+        address _target = target;
+        if (_target == 0x0) {
+            _target = msg.sender;
+        }
 
-    //     address dp = address(new DepositProxy(this, _target));
-    //     emit ProxyCreated(_target, address(dp));
-    //     return address(dp);
-    // }
+        address dp = address(new DepositProxy(this, _target));
+        emit ProxyCreated(_target, address(dp));
+        return address(dp);
+    }
 
     function invalidateOrdersBefore(address user, uint256 nonce) public onlyAdmin {
         require(nonce >= invalidOrder[user]);
